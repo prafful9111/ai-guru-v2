@@ -1,0 +1,29 @@
+{
+  "name": "worker",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.js --external:@aws-sdk/* --external:dotenv --external:@prisma/client",
+    "start": "node dist/index.js",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.999.0",
+    "@aws-sdk/client-s3": "3.267.0",
+    "@aws-sdk/s3-request-presigner": "3.267.0",
+    "@google/genai": "^1.41.0",
+    "@prisma/client": "^6.3.1",
+    "@repo/database": "workspace:*",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.13.1",
+    "esbuild": "^0.27.3",
+    "eslint": "^9.20.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
