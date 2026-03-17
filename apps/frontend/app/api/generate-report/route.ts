@@ -1,17 +1,8 @@
 import { NextResponse } from "next/server";
-import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-
-const sqsClient = new SQSClient({
-  region: process.env.AWS_REGION || "",
-  credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-  },
-});
 
 export async function POST(req: Request) {
   try {
-    console.log("🚀 Report generation request received. Enqueuing job...");
+    console.log("🚀 Report generation request received (MOCKED). Enqueuing job...");
 
     const body = await req.json();
     const { audioUrl, sessionId, stage, evalPrompt } = body;
@@ -23,22 +14,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const command = new SendMessageCommand({
-      QueueUrl: process.env.SQS_QUEUE_URL || "",
-      MessageBody: JSON.stringify({ audioUrl, sessionId, stage, evalPrompt }),
-    });
-
-    const response = await sqsClient.send(command);
-
-    console.log("✅ Report generation queued successfully. MessageId:", response.MessageId);
+    // Mock successful queueing
+    const mockMessageId = `mock-msg-${Math.random().toString(36).substring(7)}`;
+    console.log("✅ Report generation queued successfully (MOCKED). MessageId:", mockMessageId);
 
     return NextResponse.json({
       success: true,
       message: "Report generation queued",
-      messageId: response.MessageId,
+      messageId: mockMessageId,
     });
   } catch (err: any) {
-    console.error("❌ Error queuing report generation:", err);
+    console.error("❌ Error queuing report generation (MOCKED):", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

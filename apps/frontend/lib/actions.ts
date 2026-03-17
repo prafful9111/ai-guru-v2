@@ -1,16 +1,7 @@
 
 "use server";
 
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { MOCK_SCENARIOS, MOCK_USERS } from "@/lib/mock-data";
-
-const s3Client = new S3Client({
-    region: process.env.AWS_REGION || "ap-south-1",
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-    },
-});
 
 export async function createAssessmentSession(
     userId: string,
@@ -70,23 +61,13 @@ export async function uploadAudio(
     console.log(`Uploading audio for stage ${stage}... File size: ${(file.size / (1024 * 1024)).toFixed(2)} MB (${file.size} bytes)`);
 
     try {
-        const buffer = Buffer.from(await file.arrayBuffer());
         const filename = `${sessionId}_${stage}_${Date.now()}.webm`;
-        const key = `uploads/${filename}`;
-        const bucket = process.env.AWS_BUCKET_NAME;
-
-        const command = new PutObjectCommand({
-            Bucket: bucket,
-            Key: key,
-            Body: buffer,
-            ContentType: file.type || "audio/webm",
-        });
-
-        await s3Client.send(command);
+        const bucket = process.env.AWS_BUCKET_NAME || "mock-bucket";
+        // Mock successful upload without S3
         
         // Return public URL
         const region = process.env.AWS_REGION || "ap-south-1";
-        const publicUrl = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+        const publicUrl = `https://${bucket}.s3.${region}.amazonaws.com/uploads/${filename}`;
         
         return { success: true, url: publicUrl };
     } catch (error) {
@@ -106,18 +87,9 @@ export async function uploadVideo(
     }
 
     try {
-        const buffer = Buffer.from(await file.arrayBuffer());
         const filename = `${Date.now()}.webm`;
         const key = `${sessionId}/${stage}/${filename}`;
-
-        const command = new PutObjectCommand({
-            Bucket: "lnd-video-prod",
-            Key: key,
-            Body: buffer,
-            ContentType: file.type || "video/webm",
-        });
-
-        await s3Client.send(command);
+        // Mock successful upload without S3
         
         // Return public URL
         const region = process.env.AWS_REGION || "ap-south-1";
