@@ -52,7 +52,10 @@ export const MOCK_SCENARIOS = [
     attemptedCount: 45,
     passedCount: 40,
     failedCount: 5,
-    departments: ["Cardiology", "Neurology", "Emergency"]
+    departments: ["Cardiology", "Neurology", "Emergency"],
+    difficulty: ["Beginner", "Intermediate", "Advanced"],
+    type: "Medical",
+    tags: ["BLS", "CPR"]
   },
   {
     id: "scenario_2",
@@ -62,7 +65,10 @@ export const MOCK_SCENARIOS = [
     attemptedCount: 25,
     passedCount: 20,
     failedCount: 5,
-    departments: ["Cardiology", "Emergency"]
+    departments: ["Cardiology", "Emergency"],
+    difficulty: ["Advanced"],
+    type: "Medical",
+    tags: ["ACLS", "Advanced"]
   }
 ];
 
