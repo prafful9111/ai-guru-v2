@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@repo/database";
+import { MOCK_USERS } from "@/lib/mock-data";
 import { hashPassword } from "@/lib/auth/password";
 import { createUserSchema, transformUserInput } from "@repo/validation";
 import { ZodError } from "zod";
@@ -88,9 +88,7 @@ export async function POST(request: Request) {
 
         // Check for existing user by email
         if (transformedData.email) {
-          const existingByEmail = await prisma.user.findFirst({
-            where: { email: transformedData.email },
-          });
+          const existingByEmail = MOCK_USERS.find(u => u.email === transformedData.email);
 
           if (existingByEmail) {
             results.failed.push({
@@ -106,9 +104,7 @@ export async function POST(request: Request) {
 
         // Check for existing user by staffId
         if (transformedData.staffId) {
-          const existingByStaffId = await prisma.user.findUnique({
-            where: { staffId: transformedData.staffId },
-          });
+          const existingByStaffId = MOCK_USERS.find(u => u.staffId === transformedData.staffId);
 
           if (existingByStaffId) {
             results.failed.push({
@@ -122,16 +118,16 @@ export async function POST(request: Request) {
           }
         }
 
-        // Create the user
-        const createdUser = await prisma.user.create({
-          data: {
+        // Create the user (Mock)
+        const createdUser = {
+            id: "MOCK_" + Date.now() + "_" + i,
             ...transformedData,
-            password: hashedPassword,
-          },
-        });
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
 
         // Remove password from response
-        const { password: _, ...userWithoutPassword } = createdUser;
+        const { password: _, ...userWithoutPassword } = createdUser as any;
         results.successful.push({
           row: rowNumber,
           user: userWithoutPassword,
@@ -143,15 +139,6 @@ export async function POST(request: Request) {
 
         if (error instanceof ZodError) {
           errorMessages = error.errors.map((err) => err.message);
-        } else if ((error as any)?.code === "P2002") {
-          const target = (error as any)?.meta?.target;
-          if (target?.includes("staffId")) {
-            errorMessages.push("Staff ID already exists");
-          } else if (target?.includes("email")) {
-            errorMessages.push("Email already exists");
-          } else {
-            errorMessages.push("Duplicate entry found");
-          }
         } else {
           errorMessages.push("Failed to create user");
         }

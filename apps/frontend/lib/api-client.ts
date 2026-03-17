@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from "axios";
+import { interceptRequest } from "./mock-api-interceptor";
 
 class ApiClient {
     private instance: AxiosInstance;
@@ -20,8 +21,6 @@ class ApiClient {
             (error: AxiosError) => {
                 // Handle global errors here if needed
                 if (error.response) {
-                    // The request was made and the server responded with a status code
-                    // that falls out of the range of 2xx
                     const apiError = new ApiError(
                         (error.response.data as any)?.message ||
                         (error.response.data as any)?.error ||
@@ -32,19 +31,21 @@ class ApiClient {
                     return Promise.reject(apiError);
 
                 } else if (error.request) {
-                    // The request was made but no response was received
                     return Promise.reject(new ApiError("No response received form server", 0, error.request));
                 } else {
-                    // Something happened in setting up the request that triggered an Error
                     return Promise.reject(new ApiError(error.message, 0));
                 }
             }
         );
     }
 
-    // HTTP Methods using Axios
+    // HTTP Methods using Axios (Intercepted for 100% Mocking Offline)
     async get<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
-        return this.instance.get<T, T>(endpoint, config);
+        try {
+            return await interceptRequest('GET', endpoint, undefined, config?.params);
+        } catch (e: any) {
+             throw new ApiError(e.message, 400); // Simulate API throw
+        }
     }
 
     async post<T>(
@@ -52,7 +53,11 @@ class ApiClient {
         data?: unknown,
         config?: AxiosRequestConfig
     ): Promise<T> {
-        return this.instance.post<T, T>(endpoint, data, config);
+        try {
+            return await interceptRequest('POST', endpoint, data, config?.params);
+        } catch (e: any) {
+             throw new ApiError(e.message, 400); // Simulate API throw
+        }
     }
 
     async put<T>(

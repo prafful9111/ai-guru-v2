@@ -24,94 +24,34 @@ interface AuthContextType {
   signout: () => Promise<void>;
 }
 
+import { MOCK_USERS } from "@/lib/mock-data";
+
 const STORAGE_KEY = "auth_user";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
-    if (typeof window !== "undefined") {
-      const savedUser = localStorage.getItem(STORAGE_KEY);
-      if (savedUser) {
-        try {
-          const user = JSON.parse(savedUser)
-          return {
-            ...user,
-            isDemo: true
-          };
-        } catch (e) {
-          console.error("Failed to parse saved user", e);
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      }
-    }
-    return null;
+    return { ...MOCK_USERS[0], isDemo: true } as any;
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // Check if user is already authenticated on mount
+  // Bypass all server checks and use instantaneous hardcoded mock user
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const data = await apiClient.get<any>("/api/auth/me");
-        if (data.user) {
-          setUser({
-            ...data.user,
-            isDemo: true,
-          });
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            ...data.user,
-            isDemo: true,
-          }));
-        } else {
-          setUser(null);
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        // If server check fails, we should probably clear local state
-        setUser(null);
-        localStorage.removeItem(STORAGE_KEY);
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkAuth();
+    setLoading(false);
   }, []);
 
   const signin = async (name: string, password: string): Promise<User> => {
     setLoading(true);
-    try {
-      const data = await apiClient.post<any>("/api/auth/login", {
-        email: name,
-        password,
-      });
-      setUser({
-        ...data.user,
-        isDemo: true,
-      });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        ...data.user,
-        isDemo: true,
-      }));
-      return data.user;
-    } catch (error) {
-      console.error("Signin failed:", error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+    const mockUser = { ...MOCK_USERS[0], isDemo: true } as any;
+    setUser(mockUser);
+    setLoading(false);
+    return mockUser;
   };
 
   const signout = async () => {
-    try {
-      await apiClient.post("/api/auth/logout");
-    } catch (error) {
-      console.error("Signout failed:", error);
-    } finally {
-      setUser(null);
-      localStorage.removeItem(STORAGE_KEY);
-    }
+    // Keep user even on signout, or redirect to a fake state
+    setUser(null);
   };
 
   return (

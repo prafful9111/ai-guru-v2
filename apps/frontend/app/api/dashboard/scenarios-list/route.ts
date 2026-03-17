@@ -1,22 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@repo/database";
+import { MOCK_SCENARIOS } from "@/lib/mock-data";
 
 export async function GET() {
   try {
-    const scenarios = await prisma.scenario.findMany({
-      where: { isActive: true },
-      select: {
-        id: true,
-        title: true,
-      },
-      orderBy: { title: "asc" },
-    });
-
-    // Transform to match expected response format
-    const response = scenarios.map((scenario) => ({
+    const response = MOCK_SCENARIOS.map((scenario) => ({
       id: scenario.id,
       name: scenario.title,
-    }));
+    })).sort((a, b) => a.name.localeCompare(b.name));
 
     return NextResponse.json(response);
   } catch (error) {

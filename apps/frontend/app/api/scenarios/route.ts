@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@repo/database';
+import { MOCK_USERS, MOCK_SCENARIOS } from '@/lib/mock-data';
 
 import { verifyToken } from '@/lib/auth/token';
 import { cookies } from 'next/headers';
@@ -9,38 +9,28 @@ export async function GET() {
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
     
-    let userDepartment = null;
-    let userRole = null;
+    let userDepartment: string | null = null;
+    let userRole: string | null = null;
 
     if (token) {
       const payload = verifyToken(token);
       if (payload?.userId) {
-        const user = await prisma.user.findUnique({
-          where: { id: payload.userId },
-          select: { department: true, role: true }
-        });
-        userDepartment = user?.department;
-        userRole = user?.role;
+        const user = MOCK_USERS.find(u => u.id === payload.userId);
+        userDepartment = user?.department || null;
+        userRole = user?.role || null;
       }
     }
 
-    const whereClause: any = { isActive: true };
+    let scenarios = [...MOCK_SCENARIOS];
 
     if (userRole !== 'ADMIN') {
       if (userDepartment) {
-        whereClause.departments = { has: userDepartment };
+        scenarios = scenarios.filter(s => s.departments.includes(userDepartment as string));
       } else {
         // If a staff user has no department, they shouldn't see any scenarios based on "from his department only"
         return NextResponse.json([]);
       }
     }
-
-    const scenarios = await prisma.scenario.findMany({
-      where: whereClause,
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
 
     return NextResponse.json(scenarios);
   } catch (error) {

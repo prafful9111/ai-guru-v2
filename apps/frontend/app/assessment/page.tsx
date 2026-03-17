@@ -244,9 +244,9 @@ function AssessmentContent() {
     const fetchScenario = async () => {
       setLoadingScenario(true);
       try {
-        const response = await fetch("/api/scenarios");
-        if (response.ok) {
-          const data = await response.json();
+        const { apiClient } = await import('@/lib/api-client');
+        const data = await apiClient.get<any[]>("/api/scenarios");
+        if (data) {
           const found = data.find((s: any) => s.id === scenarioId);
           if (found) {
             setScenario({

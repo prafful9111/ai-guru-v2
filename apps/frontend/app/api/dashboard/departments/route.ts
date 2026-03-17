@@ -1,5 +1,5 @@
-import { prisma } from '@repo/database';
 import { NextResponse } from 'next/server';
+import { MOCK_DEPARTMENTS } from '@/lib/mock-data';
 
 export async function GET(request: Request) {
     try {
@@ -13,89 +13,24 @@ export async function GET(request: Request) {
         // format the id: 
         singleId = singleId?.replace(/%20/g, ' ') || '';
 
-        // 1. Fetch active scenarios and build department count map
-        const scenarios = await prisma.scenario.findMany({
-            where: { isActive: true },
-            select: { departments: true }
-        });
-
-        const deptScenariosCount: Record<string, number> = {};
-        scenarios.forEach(s => {
-            if (s.departments && s.departments.length > 0) {
-                s.departments.forEach(dept => {
-                    deptScenariosCount[dept] = (deptScenariosCount[dept] || 0) + 1;
-                });
-            }
-        });
-
-        // 2. Fetch all STAFF users who have a department
-        const where: any = { role: 'STAFF', department: { not: null, notIn: [""] } };
-        if (search) {
-            where.department = { contains: search, mode: 'insensitive' };
-        }
-
-        const staffUsers = await prisma.user.findMany({
-            where,
-            select: {
-                department: true,
-                sessions: {
-                    select: {
-                        assessmentScores: true,
-                    },
-                },
-            },
-        });
-
-        // 3. Aggregate data by department
-        const deptMap: Record<string, any> = {};
-
-        staffUsers.forEach((user) => {
-            const deptName = user.department || 'Unknown';
-            if (!deptMap[deptName]) {
-                deptMap[deptName] = {
-                    id: deptName,
-                    name: deptName,
-                    staffCount: 0,
-                    assigned: 0,
-                    attempted: 0,
-                    passed: 0,
-                    failed: 0,
-                };
-            }
-
-            const deptData = deptMap[deptName];
-            deptData.staffCount++;
-
-            // Assigned scenarios for this department
-            if (deptScenariosCount[deptName]) {
-                deptData.assigned += deptScenariosCount[deptName];
-            }
-
-            // Session stats
-            deptData.attempted += user.sessions.length;
-            user.sessions.forEach((session) => {
-                const scores = session.assessmentScores as any;
-                if (scores?.pass_fail === 'Pass') {
-                    deptData.passed++;
-                } else if (scores?.pass_fail === 'Fail') {
-                    deptData.failed++;
-                }
-            });
-        });
-
-        // 4. Convert to array, sort, and paginate
-        const deptsArray = Object.values(deptMap).sort((a, b) => a.name.localeCompare(b.name));
-
         if (singleId) {
-            const dept = deptsArray.find(d => d.id === singleId);
+            const dept = MOCK_DEPARTMENTS.find(d => d.id === singleId || d.name === singleId);
             if (!dept) {
                 return NextResponse.json({ error: 'Department not found' }, { status: 404 });
             }
             return NextResponse.json({ data: dept });
         }
 
-        const total = deptsArray.length;
-        const paginatedData = deptsArray.slice(skip, skip + limit);
+        let filteredDepts = [...MOCK_DEPARTMENTS];
+        if (search) {
+            const lowerSearch = search.toLowerCase();
+            filteredDepts = filteredDepts.filter(d => d.name.toLowerCase().includes(lowerSearch));
+        }
+
+        const total = filteredDepts.length;
+        filteredDepts.sort((a, b) => a.name.localeCompare(b.name));
+        
+        const paginatedData = filteredDepts.slice(skip, skip + limit);
 
         return NextResponse.json({
             data: paginatedData,

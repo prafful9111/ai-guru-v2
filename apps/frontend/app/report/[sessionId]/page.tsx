@@ -443,14 +443,11 @@ export default function AssessmentReportPage() {
       currentUrl.searchParams.delete("pdf");
 
       const source = encodeURIComponent(currentUrl.toString());
-      const response = await fetch(`/api/export-pdf?source=${source}`);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Export failed");
-      }
-
-      const blob = await response.blob();
+      
+      // MOCK PDF DOWNLOAD: Prevent real API call to /api/export-pdf
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const blob = new Blob(["Mock PDF Content generated during simulated offline run"], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

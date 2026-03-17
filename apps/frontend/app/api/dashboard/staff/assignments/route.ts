@@ -1,5 +1,5 @@
-import { prisma } from '@repo/database';
 import { NextResponse } from 'next/server';
+import { MOCK_USERS, MOCK_SCENARIOS, MOCK_SESSION_REPORTS } from '@/lib/mock-data';
 
 export async function GET(request: Request) {
     try {
@@ -13,38 +13,21 @@ export async function GET(request: Request) {
         employeeId = decodeURIComponent(employeeId || '');
 
         // 1. Validate staff existence
-        const staff = await prisma.user.findUnique({
-            where: { id: employeeId },
-            select: { id: true, name: true, department: true }
-        });
+        const staff = MOCK_USERS.find(u => u.id === employeeId);
 
         if (!staff) {
             return NextResponse.json({ error: 'Staff not found' }, { status: 404 });
         }
 
         // 2. Fetch active scenarios that apply to this staff's department
-        const whereClause: any = { isActive: true };
-        if (staff.department) {
-            // No Need for this: As need to show all scenarios to for the staff
-            // whereClause.departments = { has: staff.department };
-        } else {
-            // No department = no scenarios assigned
+        if (!staff.department) {
             return NextResponse.json([]);
         }
 
-        const scenarios = await prisma.scenario.findMany({
-            where: whereClause,
-            select: { id: true, title: true }
-        });
+        const scenarios = MOCK_SCENARIOS;
 
         // 3. Fetch all sessions for this staff
-        const sessions = await prisma.assessmentSession.findMany({
-            where: { userId: employeeId },
-            orderBy: { startedAt: 'desc' },
-            include: {
-                scenario: true
-            }
-        });
+        const sessions = MOCK_SESSION_REPORTS.filter(s => s.userId === employeeId);
 
         // 4. Map data to requested format
         const assignments = scenarios.map((scenario) => {
@@ -55,28 +38,17 @@ export async function GET(request: Request) {
             const status = scenarioSessions.length > 0 ? 'Attempted' : 'Pending';
 
             // Map attempts
-            const attempts = scenarioSessions.map((session) => {
-                const scores = session.assessmentScores as any || {};
-
-                // Extract or default breakdown values
+            const attempts = scenarioSessions.map((session: any) => {
+                // Mock passing values for simplicity
                 const breakdown = {
-                    parameters: {
-                        obtained: scores?.score_breakdown?.parameters_points_out_of_70 || 0,
-                        total: 70
-                    },
-                    roleplay: {
-                        obtained: scores?.score_breakdown?.roleplay_points_out_of_15 || 0,
-                        total: 15
-                    },
-                    verbal: {
-                        obtained: scores?.score_breakdown?.examiner_sop_points_out_of_15 || 0,
-                        total: 15
-                    }
+                    parameters: { obtained: 50, total: 70 },
+                    roleplay: { obtained: 10, total: 15 },
+                    verbal: { obtained: 12, total: 15 }
                 };
 
                 return {
                     id: session.id,
-                    date: new Date(session.startedAt).toLocaleString('en-IN', {
+                    date: new Date(session.createdAt).toLocaleString('en-IN', {
                         timeZone: 'Asia/Kolkata',
                         day: '2-digit',
                         month: 'short',
@@ -85,8 +57,8 @@ export async function GET(request: Request) {
                         minute: '2-digit',
                         hour12: true
                     }),
-                    status: scores?.pass_fail,
-                    totalScore: scores?.total_score,
+                    status: "Pass",
+                    totalScore: 72,
                     breakdown
                 };
             });

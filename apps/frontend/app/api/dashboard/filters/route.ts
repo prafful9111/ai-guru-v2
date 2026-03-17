@@ -1,26 +1,16 @@
-import { prisma } from '@repo/database';
 import { NextResponse } from 'next/server';
+import { MOCK_USERS } from '@/lib/mock-data';
 
 export async function GET() {
     try {
-        // Fetch all unique combinations of city, department, and unit from STAFF users
-        const users = await prisma.user.findMany({
-            where: {
-                role: 'STAFF',
-            },
-            select: {
-                city: true,
-                department: true,
-                unit: true,
-            },
-        });
-
         const hierarchy: Record<string, Record<string, Set<string>>> = {};
 
+        const users = MOCK_USERS.filter(u => u.role === 'STAFF');
+
         users.forEach(user => {
-            const city = user.city || 'Unknown City';
+            const city = (user as any).city || 'Unknown City';
             const dept = user.department || 'Unknown Department';
-            const unit = user.unit || 'Unknown Unit';
+            const unit = (user as any).unit || 'Unknown Unit';
 
             if (!hierarchy[city]) {
                 hierarchy[city] = {};

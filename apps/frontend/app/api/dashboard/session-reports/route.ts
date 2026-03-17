@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@repo/database";
+import { MOCK_SESSION_REPORTS, MOCK_USERS, MOCK_SCENARIOS } from "@/lib/mock-data";
 
 export async function GET(request: Request) {
   try {
@@ -17,217 +17,96 @@ export async function GET(request: Request) {
     const difficulty = searchParams.get("difficulty") || "";
     const skip = (page - 1) * limit;
 
-    // Build search conditions
-    const searchConditions: any[] = [];
-    if (search) {
-      searchConditions.push(
-        { user: { name: { contains: search, mode: "insensitive" } } },
-        { user: { staffId: { contains: search, mode: "insensitive" } } },
-        { scenario: { title: { contains: search, mode: "insensitive" } } },
-        { id: { contains: search, mode: "insensitive" } },
-      );
-    }
+    // Build base reports
+    let sessionReports = MOCK_SESSION_REPORTS.map((session) => {
+        const user = MOCK_USERS.find(u => u.id === session.userId) || { id: 'unknown_user_id', name: 'Unknown', staffId: 'UKNWN', department: 'Unknown', unit: 'Unknown', city: 'Unknown', role: 'STAFF' };
+        const scenario = MOCK_SCENARIOS.find(s => s.id === session.scenarioId) || { id: session.scenarioId, title: 'Unknown Scenario' };
+        
+        // Random mock scores for demonstration
+        const finalScore = Math.floor(Math.random() * 40) + 60;
+        const parameterScore = Math.floor(finalScore * 0.7);
+        const sopScore = Math.floor(finalScore * 0.3);
+        
+        let calculatedRagStatus: "RED" | "AMBER" | "GREEN" = "RED";
+        if (finalScore >= 80) calculatedRagStatus = "GREEN";
+        else if (finalScore >= 65) calculatedRagStatus = "AMBER";
 
-    // Build filter conditions
-    const filterConditions: any = {};
+        return {
+            sessionId: session.id,
+            dateTime: session.createdAt,
+            completedAt: session.completedAt,
+            difficulty: session.difficultyLevel,
+            language: session.language,
+            status: session.status,
+            totalDurationSeconds: session.totalDurationSeconds,
+            userId: user.id,
+            staffId: user.staffId,
+            userName: user.name,
+            userDepartment: user.department || '',
+            userUnit: (user as any).unit || '',
+            userCity: (user as any).city || '',
+            scenarioId: scenario.id,
+            scenarioTitle: scenario.title,
+            finalScore,
+            parameterScore,
+            sopScore,
+            ragStatus: calculatedRagStatus,
+            audioUrl: null,
+            hasVideo: false,
+        };
+    });
+
+    // Apply Filters
+    if (search) {
+        const s = search.toLowerCase();
+        sessionReports = sessionReports.filter(r => 
+            r.userName?.toLowerCase().includes(s) || 
+            r.staffId?.toLowerCase().includes(s) || 
+            r.scenarioTitle?.toLowerCase().includes(s)
+        );
+    }
     if (city) {
-      filterConditions.user = {
-        ...filterConditions.user,
-        city: { equals: city, mode: "insensitive" },
-      };
+        sessionReports = sessionReports.filter(r => r.userCity?.toLowerCase() === city.toLowerCase());
     }
     if (unit) {
-      filterConditions.user = {
-        ...filterConditions.user,
-        unit: { equals: unit, mode: "insensitive" },
-      };
+        sessionReports = sessionReports.filter(r => r.userUnit?.toLowerCase() === unit.toLowerCase());
     }
     if (department) {
-      filterConditions.user = {
-        ...filterConditions.user,
-        department: { equals: department, mode: "insensitive" },
-      };
+        sessionReports = sessionReports.filter(r => r.userDepartment?.toLowerCase() === department.toLowerCase());
     }
-
-    // Date range filter
-    if (startDate || endDate) {
-      filterConditions.startedAt = {};
-      if (startDate) {
-        filterConditions.startedAt.gte = new Date(startDate);
-      }
-      if (endDate) {
-        // Add 1 day to include the end date fully
-        const endDateObj = new Date(endDate);
-        endDateObj.setDate(endDateObj.getDate() + 1);
-        filterConditions.startedAt.lte = endDateObj;
-      }
-    }
-
-    // Scenario filter
     if (scenarioId) {
-      filterConditions.scenarioId = scenarioId;
+        sessionReports = sessionReports.filter(r => r.scenarioId === scenarioId);
     }
-
-    // Difficulty filter
     if (difficulty) {
-      filterConditions.difficultyLevel = {
-        equals: difficulty,
-        mode: "insensitive",
-      };
+        sessionReports = sessionReports.filter(r => r.difficulty?.toLowerCase() === difficulty.toLowerCase());
     }
-
-    // Combine search and filter conditions
-    let where: any = {};
-    if (search && Object.keys(filterConditions).length > 0) {
-      where = { AND: [{ OR: searchConditions }, filterConditions] };
-    } else if (search) {
-      where = { OR: searchConditions };
-    } else if (Object.keys(filterConditions).length > 0) {
-      where = filterConditions;
+    
+    // Dates
+    if (startDate) {
+        const start = new Date(startDate).getTime();
+        sessionReports = sessionReports.filter(r => new Date(r.dateTime).getTime() >= start);
     }
-
-    where = { user: { role: { not: "ADMIN" } }, ...where };
-    where = { ...where, status: { equals: "completed" } };
-    where = { ...where, totalDurationSeconds: { gte: 60 } };
-
-    // For RAG status filter, we need to fetch all matching records first and filter after transformation
-    // because RAG status is computed from assessmentScores
-    const needsRagFilter = !!ragStatus;
-
-    // Fetch sessions with related data (fetch more if we need to filter by RAG status)
-    const sessions = await prisma.assessmentSession.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            staffId: true,
-            department: true,
-            unit: true,
-          },
-        },
-        scenario: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
-        stageResults: {
-          select: {
-            id: true,
-            stage: true,
-            audioUrl: true,
-            videoUrl: true,
-            durationSeconds: true,
-          },
-        },
-        evaluationResults: {
-          select: {
-            id: true,
-            stage: true,
-            evalResult: true,
-          },
-        },
-      },
-      orderBy: { startedAt: "desc" },
-    });
-
-    // Transform data to include computed fields
-    const sessionReports = sessions.map((session) => {
-      // Extract scores from assessmentScores JSON
-      const assessmentScores = session.assessmentScores as any;
-
-      // Calculate parameter score from evaluation results
-      let parameterScore = 0;
-      let sopScore = 0;
-      let finalScore = 0;
-      let ragStatus: "RED" | "AMBER" | "GREEN" = "RED";
-
-      if (assessmentScores) {
-        finalScore = assessmentScores.total_score || 0;
-        parameterScore =
-          assessmentScores.score_breakdown?.parameters_points_out_of_70 || 0;
-        sopScore =
-          assessmentScores.score_breakdown?.roleplay_sop_score_out_of_30 || 0;
-
-        // Determine RAG status based on pass/fail or score
-        if (assessmentScores.rag_status === "green") {
-          ragStatus = "GREEN";
-        } else if (assessmentScores.rag_status === "amber") {
-          ragStatus = "AMBER";
-        } else {
-          ragStatus = "RED";
-        }
-      }
-
-      // Get roleplay audio URL
-      const roleplayStage = session.stageResults.find(
-        (sr) => sr.stage === "roleplay" || sr.stage === "Roleplay",
-      );
-      const audioUrl = roleplayStage?.audioUrl || null;
-
-      return {
-        sessionId: session.id,
-        dateTime: session.startedAt,
-        completedAt: session.completedAt,
-        difficulty: session.difficultyLevel,
-        language: session.language,
-        status: session.status,
-        totalDurationSeconds: session.totalDurationSeconds,
-        // User info
-        userId: session.user.id,
-        staffId: session.user.staffId,
-        userName: session.user.name,
-        userDepartment: session.user.department,
-        userUnit: session.user.unit,
-        // Scenario info
-        scenarioId: session.scenario.id,
-        scenarioTitle: session.scenario.title,
-        // Evaluation info
-        finalScore,
-        parameterScore,
-        sopScore,
-        ragStatus,
-        // Actions
-        audioUrl,
-        hasVideo: session.stageResults.some((sr) => sr.videoUrl),
-      };
-    });
+    if (endDate) {
+        const end = new Date(endDate);
+        end.setDate(end.getDate() + 1);
+        sessionReports = sessionReports.filter(r => new Date(r.dateTime).getTime() <= end.getTime());
+    }
 
     // Filter by RAG status if specified
-    let filteredReports = sessionReports;
     if (ragStatus) {
-      filteredReports = sessionReports.filter(
-        (report) => report.ragStatus === ragStatus.toUpperCase(),
-      );
+      sessionReports = sessionReports.filter(r => r.ragStatus === ragStatus.toUpperCase());
     }
 
-    // Calculate RAG counts from filtered reports
-    // If RAG status filter is applied, only show count for that status
     const ragCounts = {
-      total: filteredReports.length,
-      green: ragStatus
-        ? ragStatus.toUpperCase() === "GREEN"
-          ? filteredReports.length
-          : 0
-        : sessionReports.filter((r) => r.ragStatus === "GREEN").length,
-      amber: ragStatus
-        ? ragStatus.toUpperCase() === "AMBER"
-          ? filteredReports.length
-          : 0
-        : sessionReports.filter((r) => r.ragStatus === "AMBER").length,
-      red: ragStatus
-        ? ragStatus.toUpperCase() === "RED"
-          ? filteredReports.length
-          : 0
-        : sessionReports.filter((r) => r.ragStatus === "RED").length,
+      total: sessionReports.length,
+      green: sessionReports.filter((r) => r.ragStatus === "GREEN").length,
+      amber: sessionReports.filter((r) => r.ragStatus === "AMBER").length,
+      red: sessionReports.filter((r) => r.ragStatus === "RED").length,
     };
 
-    // Apply pagination after filtering
-    const totalSessions = filteredReports.length;
+    const totalSessions = sessionReports.length;
     const totalPages = Math.ceil(totalSessions / limit);
-    const paginatedReports = filteredReports.slice(skip, skip + limit);
+    const paginatedReports = sessionReports.slice(skip, skip + limit);
 
     return NextResponse.json({
       data: paginatedReports,

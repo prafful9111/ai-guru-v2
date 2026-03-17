@@ -1,5 +1,5 @@
-import { prisma } from '@repo/database';
 import { NextResponse } from 'next/server';
+import { MOCK_USERS, MOCK_SCENARIOS, MOCK_SESSION_REPORTS } from '@/lib/mock-data';
 
 export async function GET(request: Request) {
     try {
@@ -13,15 +13,9 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Unit ID is required' }, { status: 400 });
         }
 
-        // format the id: 
         unitId = decodeURIComponent(unitId || '');
 
-        // 1. Fetch all staff in this unit
-        const staffMembers = await prisma.user.findMany({
-            where: { role: 'STAFF', unit: unitId },
-            select: { id: true, name: true, department: true },
-            orderBy: { name: 'asc' }
-        });
+        const staffMembers = MOCK_USERS.filter(u => u.role === 'STAFF' && (u as any).unit === unitId);
 
         if (staffMembers.length === 0) {
             return NextResponse.json({
@@ -30,51 +24,23 @@ export async function GET(request: Request) {
             });
         }
 
-        // 2. Identify all departments represented in this unit
-        const departmentNames = Array.from(new Set(staffMembers.map(s => s.department).filter(Boolean))) as string[];
-
-        // 3. Fetch all active scenarios for these departments
-        const scenarios = await prisma.scenario.findMany({
-            where: {
-                isActive: true,
-                departments: { hasSome: departmentNames }
-            },
-            select: { id: true, title: true, departments: true }
-        });
-
-        const staffIds = staffMembers.map(s => s.id);
-        const scenarioIds = scenarios.map(s => s.id);
-
-        // 4. Fetch all sessions for these staff members and scenarios
-        const sessions = await prisma.assessmentSession.findMany({
-            where: {
-                userId: { in: staffIds },
-                scenarioId: { in: scenarioIds }
-            },
-            orderBy: { startedAt: 'desc' }
-        });
-
-        // 5. Map data to assignments format
         const assignments: any[] = [];
-
         staffMembers.forEach((staff) => {
-            // Only scenarios that are assigned to this staff member's department
-            const staffScenarios = scenarios.filter(s =>
+            const staffScenarios = MOCK_SCENARIOS.filter(s =>
                 staff.department && s.departments.includes(staff.department)
             );
 
             staffScenarios.forEach((scenario) => {
-                const staffScenarioSessions = sessions.filter(s =>
+                const staffScenarioSessions = MOCK_SESSION_REPORTS.filter(s =>
                     s.userId === staff.id && s.scenarioId === scenario.id
                 );
 
                 const status = staffScenarioSessions.length > 0 ? 'Attempted' : 'Pending';
 
                 const attempts = staffScenarioSessions.map((session: any) => {
-                    const scores = session.assessmentScores as any || {};
                     return {
                         id: session.id,
-                        date: new Date(session.startedAt).toLocaleString('en-IN', {
+                        date: new Date(session.createdAt).toLocaleString('en-IN', {
                             timeZone: 'Asia/Kolkata',
                             day: '2-digit',
                             month: 'short',
@@ -83,21 +49,12 @@ export async function GET(request: Request) {
                             minute: '2-digit',
                             hour12: true
                         }),
-                        status: scores?.pass_fail,
-                        totalScore: scores?.total_score || 0,
+                        status: "Pass",
+                        totalScore: 75,
                         breakdown: {
-                            parameters: {
-                                obtained: scores?.score_breakdown?.parameters_points_out_of_70 || 0,
-                                total: 70
-                            },
-                            roleplay: {
-                                obtained: scores?.score_breakdown?.roleplay_points_out_of_15 || 0,
-                                total: 15
-                            },
-                            verbal: {
-                                obtained: scores?.score_breakdown?.examiner_sop_points_out_of_15 || 0,
-                                total: 15
-                            }
+                            parameters: { obtained: 50, total: 70 },
+                            roleplay: { obtained: 12, total: 15 },
+                            verbal: { obtained: 13, total: 15 }
                         }
                     };
                 });

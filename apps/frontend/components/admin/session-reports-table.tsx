@@ -293,9 +293,9 @@ export function SessionReportsTable({
         cell: ({ row }) => (
           <div
             className="font-mono text-xs truncate max-w-25"
-            title={row.getValue("sessionId")}
+            title={row.getValue("sessionId") || "Unknown"}
           >
-            {(row.getValue("sessionId") as string).slice(0, 8)}...
+            {(row.getValue("sessionId") as string || "Unknown").slice(0, 8)}...
           </div>
         ),
       },

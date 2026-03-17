@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@repo/database';
-import { verifyPassword } from '@/lib/auth/password';
+import { MOCK_USERS } from '@/lib/mock-data';
 import { signToken } from '@/lib/auth/token';
 import { cookies } from 'next/headers';
 
@@ -14,15 +13,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing identifier or password' }, { status: 400 });
     }
 
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: identifier },
-          { phoneNumber: identifier },
-          { staffId: identifier }
-        ]
-      },
-    });
+    // Mock search
+    const user = MOCK_USERS.find(u => 
+      u.email === identifier || 
+      u.phoneNumber === identifier || 
+      u.staffId === identifier
+    );
 
     if (!user) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
@@ -34,7 +30,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Staff must login using Phone Number or Staff ID' }, { status: 403 });
     }
 
-    const isValid = await verifyPassword(password, user.password);
+    // Mock password verification
+    const isValid = password === user.password;
 
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });

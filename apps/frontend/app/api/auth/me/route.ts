@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@repo/database';
+import { MOCK_USERS } from '@/lib/mock-data';
 import { verifyToken } from '@/lib/auth/token';
 import { cookies } from 'next/headers';
 
@@ -17,22 +17,14 @@ export async function GET() {
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: {
-        id: true,
-        name: true,
-        role: true,
-        department: true,
-        staffId: true,
-      }
-    });
+    const user = MOCK_USERS.find(u => u.id === payload.userId);
 
     if (!user) {
       return NextResponse.json({ user: null }, { status: 200 });
     }
 
-    return NextResponse.json({ user }, { status: 200 });
+    const { id, name, role, department, staffId } = user;
+    return NextResponse.json({ user: { id, name, role, department, staffId } }, { status: 200 });
   } catch (error) {
     console.error('Profile fetch error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

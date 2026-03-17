@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@repo/database';
-import { hashPassword } from '@/lib/auth/password';
+import { MOCK_USERS } from '@/lib/mock-data';
 
 export async function POST(request: Request) {
   try {
@@ -10,26 +9,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser = MOCK_USERS.find(u => u.email === email);
 
     if (existingUser) {
       return NextResponse.json({ error: 'User already exists' }, { status: 400 });
     }
 
-    const hashedPassword = await hashPassword(password);
+    const newUser = {
+      id: `mock_user_${Date.now()}`,
+      email,
+      password, // Storing plaintext for mock
+      name,
+      role: role || 'STAFF',
+      department: null,
+      staffId: `STAFF-${Math.floor(Math.random() * 1000)}`,
+      phoneNumber: `555${Math.floor(Math.random() * 1000000)}`,
+    };
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-        role: role || 'STAFF',
-      },
-    });
+    MOCK_USERS.push(newUser);
 
-    const { password: _, ...userProfile } = user;
+    const { password: _, ...userProfile } = newUser;
 
     return NextResponse.json({ user: userProfile }, { status: 201 });
   } catch (error) {

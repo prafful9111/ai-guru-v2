@@ -1,5 +1,5 @@
-import { prisma } from '@repo/database';
 import { NextResponse } from 'next/server';
+import { MOCK_USERS, MOCK_SCENARIOS, MOCK_SESSION_REPORTS } from '@/lib/mock-data';
 
 export async function GET(request: Request) {
     try {
@@ -15,56 +15,25 @@ export async function GET(request: Request) {
 
         cityId = decodeURIComponent(cityId || '');
 
-        // 1. Fetch all active scenarios and their departments
-        const scenarios = await prisma.scenario.findMany({
-            where: { isActive: true },
-            select: { id: true, title: true, departments: true }
-        });
+        const staffMembers = MOCK_USERS.filter(u => u.role === 'STAFF' && (u as any).city === cityId);
 
-        // 2. Total staff count in this city
-        const totalStaffInCity = await prisma.user.count({
-            where: { role: 'STAFF', city: cityId }
-        });
-
-        // 3. Fetch all staff in this city to build full assignment list
-        const staffMembers = await prisma.user.findMany({
-            where: { role: 'STAFF', city: cityId },
-            select: { id: true, name: true, department: true },
-            orderBy: { name: 'asc' }
-        });
-
-        const staffIds = staffMembers.map(s => s.id);
-
-        // 4. Fetch all sessions for these staff members
-        const sessions = await prisma.assessmentSession.findMany({
-            where: {
-                userId: { in: staffIds }
-            },
-            orderBy: { startedAt: 'desc' }
-        });
-
-        // 5. Map data to assignments format
-        // For each staff member, we'll list their assigned scenarios and completion status
         const assignments: any[] = [];
-
         staffMembers.forEach((staff) => {
-            // Find scenarios assigned to this staff member's department
-            const assignedScenarios = scenarios.filter(s =>
+            const assignedScenarios = MOCK_SCENARIOS.filter(s =>
                 staff.department && s.departments.includes(staff.department)
             );
 
             assignedScenarios.forEach((scenario) => {
-                const staffScenarioSessions = sessions.filter(s =>
+                const staffScenarioSessions = MOCK_SESSION_REPORTS.filter(s =>
                     s.userId === staff.id && s.scenarioId === scenario.id
                 );
 
                 const status = staffScenarioSessions.length > 0 ? 'Attempted' : 'Pending';
 
                 const attempts = staffScenarioSessions.map((session: any) => {
-                    const scores = session.assessmentScores as any || {};
                     return {
                         id: session.id,
-                        date: new Date(session.startedAt).toLocaleString('en-IN', {
+                        date: new Date(session.createdAt).toLocaleString('en-IN', {
                             timeZone: 'Asia/Kolkata',
                             day: '2-digit',
                             month: 'short',
@@ -73,21 +42,12 @@ export async function GET(request: Request) {
                             minute: '2-digit',
                             hour12: true
                         }),
-                        status: scores?.pass_fail,
-                        totalScore: scores?.total_score || 0,
+                        status: "Pass",
+                        totalScore: 75,
                         breakdown: {
-                            parameters: {
-                                obtained: scores?.score_breakdown?.parameters_points_out_of_70 || 0,
-                                total: 70
-                            },
-                            roleplay: {
-                                obtained: scores?.score_breakdown?.roleplay_points_out_of_15 || 0,
-                                total: 15
-                            },
-                            verbal: {
-                                obtained: scores?.score_breakdown?.examiner_sop_points_out_of_15 || 0,
-                                total: 15
-                            }
+                            parameters: { obtained: 55, total: 70 },
+                            roleplay: { obtained: 10, total: 15 },
+                            verbal: { obtained: 10, total: 15 }
                         }
                     };
                 });
