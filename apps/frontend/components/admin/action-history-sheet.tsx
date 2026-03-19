@@ -1,163 +1,223 @@
+"use client";
+
 import React, { useState } from "react";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Clock, Send, FileText, CheckCircle2, AlertOctagon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Send, Clock, FileText, CheckCircle2, Mail, RotateCcw, PauseCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface ActionHistorySheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  staff: any; // Mock staff data
+  staff: any;
 }
 
+const CONTACTS: Record<string, { role: string; email: string }> = {
+  "Dr. Ahmed Khan":  { role: "Cardiologist",      email: "ahmed.khan@hospital.org" },
+  "Priya Nair":      { role: "Radiographer",       email: "priya.nair@hospital.org" },
+  "Sarah Jenkins":   { role: "ICU Nurse",          email: "s.jenkins@hospital.org" },
+  "Tom Bradley":     { role: "Pharmacist",         email: "t.bradley@hospital.org" },
+  "Maria Lopez":     { role: "ER Physician",       email: "m.lopez@hospital.org" },
+  "Aisha Malik":     { role: "Oncology Nurse",     email: "a.malik@hospital.org" },
+  "Dr. James Smith": { role: "Surgical Attending", email: "j.smith@hospital.org" },
+  "Carlos Rivera":   { role: "PICU Specialist",    email: "c.rivera@hospital.org" },
+};
+
+const TIER_BADGE: Record<string, string> = {
+  Nudge:     "bg-slate-100 text-slate-600 border border-slate-200",
+  Warning:   "bg-amber-50  text-amber-700 border border-amber-200",
+  Urgent:    "bg-red-50    text-red-700   border border-red-200",
+  Escalated: "bg-slate-800 text-white",
+};
+
+type LogEntry = {
+  id: number;
+  type: "auto" | "system" | "manual";
+  text: string;
+  date: string;
+};
+
+const BASE_LOG: LogEntry[] = [
+  { id: 1, type: "auto",   text: "Automated Gentle Reminder sent to staff.",                       date: "Mar 17, 2026 · 09:00 AM" },
+  { id: 2, type: "auto",   text: "Automated Warning sent — CC: Unit Manager.",                     date: "Mar 21, 2026 · 09:00 AM" },
+  { id: 3, type: "system", text: "Staff opened assessment link. Session incomplete (2m 14s).",     date: "Mar 21, 2026 · 11:32 AM" },
+];
+
 export function ActionHistorySheet({ open, onOpenChange, staff }: ActionHistorySheetProps) {
-  const [note, setNote] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [history, setHistory] = useState([
-    {
-      id: 1,
-      type: "auto",
-      action: "System sent Gentle Reminder notification to staff",
-      date: "Oct 21, 2026 - 09:00 AM",
-      icon: <Send className="h-4 w-4" />
-    },
-    {
-      id: 2,
-      type: "auto",
-      action: "System sent Warning notification to staff (CC: Unit Manager)",
-      date: "Oct 25, 2026 - 09:00 AM",
-      icon: <Send className="h-4 w-4" />
-    },
-    {
-      id: 3,
-      type: "system",
-      action: "Staff clicked link but did not complete assessment.",
-      date: "Oct 25, 2026 - 11:32 AM",
-      icon: <Clock className="h-4 w-4" />
-    }
-  ]);
+  const [log, setLog]               = useState<LogEntry[]>(BASE_LOG);
+  const [note, setNote]             = useState("");
+  const [isSaving, setIsSaving]     = useState(false);
 
   if (!staff) return null;
 
-  const handleAddNote = () => {
-    if (!note.trim()) return;
-    setIsSubmitting(true);
-    
-    // Simulate API delay
-    setTimeout(() => {
-      setHistory([
-        ...history,
-        {
-          id: Date.now(),
-          type: "manual",
-          action: `Admin Note: ${note} (Escalation Timer Paused)`,
-          date: new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
-          icon: <FileText className="h-4 w-4" />
-        }
-      ]);
-      setNote("");
-      setIsSubmitting(false);
-      toast.success("Manual override applied and log updated.");
-    }, 600);
+  const contact = CONTACTS[staff.name] ?? { role: staff.department, email: `${staff.name.toLowerCase().replace(/ /g,".")}@hospital.org` };
+
+  const addLog = (text: string, type: LogEntry["type"] = "manual") => {
+    setLog((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        type,
+        text,
+        date: new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
   };
+
+  const handlePause = () => {
+    if (!note.trim()) return;
+    setIsSaving(true);
+    setTimeout(() => {
+      addLog(`Escalation paused by Admin. Reason: ${note}`);
+      setNote("");
+      setIsSaving(false);
+      toast.success("Escalation paused. Log updated.");
+    }, 500);
+  };
+
+  const handleEmail = () => {
+    addLog(`Manual email sent to ${staff.name} by Admin.`);
+    toast.success(`Email sent to ${contact.email}`);
+  };
+
+  const handleRetake = () => {
+    addLog(`Force retake issued by Admin for "${staff.module}".`);
+    toast(`Retake triggered for ${staff.name}.`, { icon: "🔁" });
+  };
+
+  const iconFor = (type: LogEntry["type"]) => {
+    if (type === "manual") return <CheckCircle2 className="h-3 w-3" />;
+    if (type === "system") return <Clock className="h-3 w-3" />;
+    return <Send className="h-3 w-3" />;
+  };
+
+  const dotColor = (type: LogEntry["type"]) =>
+    type === "manual" ? "bg-slate-800 text-white" : type === "system" ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="border-b pb-4 mb-4">
-          <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <SheetTitle className="text-xl">Action History</SheetTitle>
-              <SheetDescription>
-                Detailed log book and timeline for {staff.name}.
-              </SheetDescription>
+      <SheetContent className="w-full sm:max-w-[420px] flex flex-col gap-0 p-0 overflow-hidden">
+
+        {/* ── Header ── */}
+        <div className="border-b border-slate-200 px-5 py-4">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <SheetTitle className="text-[14px] font-bold text-slate-900 leading-tight">{staff.name}</SheetTitle>
+              <p className="text-[11px] text-slate-500 mt-0.5">{contact.role} · {staff.department}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5 font-mono">{staff.staffId} · {contact.email}</p>
             </div>
-            {staff.tier === "Escalated" && (
-              <Badge variant="destructive" className="bg-red-100 text-red-700 hover:bg-red-100 uppercase tracking-wider text-[10px]">
-                <AlertOctagon className="h-3 w-3 mr-1" />
-                Non-Compliant
-              </Badge>
-            )}
-          </div>
-        </SheetHeader>
-
-        <div className="space-y-6">
-          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-             <h4 className="text-sm font-semibold text-gray-900">Staff Profile</h4>
-             <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                   <p className="text-gray-500">Department</p>
-                   <p className="font-medium text-gray-900">{staff.department}</p>
-                </div>
-                <div>
-                   <p className="text-gray-500">Overdue By</p>
-                   <p className="font-medium text-rose-600">{staff.daysOverdue} Days</p>
-                </div>
-                <div>
-                   <p className="text-gray-500">Current Tier</p>
-                   <p className="font-medium text-gray-900">{staff.tier}</p>
-                </div>
-                <div>
-                   <p className="text-gray-500">Assignment</p>
-                   <p className="font-medium text-gray-900">{staff.module}</p>
-                </div>
-             </div>
+            <span className={`mt-0.5 flex-shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${TIER_BADGE[staff.tier] ?? "bg-slate-100 text-slate-600"}`}>
+              {staff.tier}
+            </span>
           </div>
 
-          <div className="space-y-4 pt-2">
-            <h4 className="text-sm font-semibold text-gray-900 flex justify-between items-center">
-              Event Log Book
-              <span className="text-xs font-normal text-gray-500">{history.length} records</span>
-            </h4>
-            
-            <div className="relative border-l border-gray-200 ml-3 space-y-6 pb-2">
-              {history.map((item, idx) => (
-                <div key={item.id} className="relative pl-6">
-                  <span className={`absolute -left-2.5 flex h-5 w-5 items-center justify-center rounded-full ring-4 ring-white
-                      ${item.type === 'manual' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}
-                    `}>
-                    {item.type === 'manual' ? <CheckCircle2 className="h-3 w-3" /> : item.icon}
+          {/* Quick stats strip */}
+          <div className="mt-3 grid grid-cols-3 divide-x divide-slate-100 border border-slate-100 rounded bg-slate-50/60">
+            {[
+              { label: "Due Date",    val: staff.dueDate },
+              { label: "Days Late",   val: `+${staff.daysOverdue}d`, cls: "text-red-700 font-bold" },
+              { label: "Assignment",  val: staff.module ?? staff.department },
+            ].map(({ label, val, cls }) => (
+              <div key={label} className="px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{label}</p>
+                <p className={`text-[12px] mt-0.5 font-medium text-slate-700 truncate ${cls ?? ""}`}>{val}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+
+          {/* Audit Log */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Audit Log</p>
+              <span className="text-[10px] text-slate-400">{log.length} events</span>
+            </div>
+            <div className="relative border-l border-slate-200 ml-2 space-y-4">
+              {log.map((item) => (
+                <div key={item.id} className="relative pl-5">
+                  <span className={`absolute -left-[9px] flex h-[18px] w-[18px] items-center justify-center rounded-full ring-2 ring-white ${dotColor(item.type)}`}>
+                    {iconFor(item.type)}
                   </span>
-                  <div className="flex flex-col space-y-1">
-                    <p className={`text-sm ${item.type === 'manual' ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
-                      {item.action}
-                    </p>
-                    <time className="text-xs text-gray-400">{item.date}</time>
-                  </div>
+                  <p className={`text-[12px] leading-snug ${item.type === "manual" ? "font-semibold text-slate-800" : "text-slate-600"}`}>
+                    {item.text}
+                  </p>
+                  <time className="text-[10px] text-slate-400 mt-0.5 block">{item.date}</time>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-100">
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Manual Override</h4>
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <Label htmlFor="note" className="text-xs text-gray-500">Admin Note (Pauses systemic escalation)</Label>
-                <Textarea 
-                  id="note" 
-                  placeholder="e.g. Staff on medical leave starting Oct 26. Extend deadline by 14 days." 
-                  className="resize-none h-20 bg-gray-50"
-                  value={note}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value)}
-                />
-              </div>
-              <Button 
-                onClick={handleAddNote} 
-                disabled={!note.trim() || isSubmitting} 
-                className="w-full bg-[#2d87a4] hover:bg-[#236b82]"
+          {/* Divider */}
+          <div className="border-t border-slate-100" />
+
+          {/* Admin Controls */}
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">Admin Controls</p>
+
+            {/* Quick action row */}
+            <div className="flex gap-2 mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEmail}
+                className="flex-1 h-8 text-[12px] border-slate-200 text-slate-700 hover:bg-slate-50 gap-1.5"
               >
-                {isSubmitting ? "Saving & Pausing Timer..." : "Save Note & Pause Timer"}
+                <Mail className="h-3.5 w-3.5" /> Send Email
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetake}
+                className="flex-1 h-8 text-[12px] border-amber-200 text-amber-700 hover:bg-amber-50 gap-1.5"
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Force Retake
+              </Button>
+            </div>
+
+            {/* Pause escalation form */}
+            <div className="bg-slate-50 border border-slate-200 rounded p-3 space-y-2.5">
+              <div className="flex items-center gap-1.5">
+                <PauseCircle className="h-3.5 w-3.5 text-slate-500" />
+                <p className="text-[12px] font-semibold text-slate-700">Pause Escalation Timer</p>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Adding a justification note will suspend automated escalation emails for this staff member until manually resumed.
+              </p>
+              <Textarea
+                placeholder='e.g. "Staff on certified medical leave until Apr 2. Deadline extended by 14 days."'
+                value={note}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value)}
+                className="resize-none h-20 text-[12px] bg-white border-slate-200"
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={handlePause}
+                  disabled={!note.trim() || isSaving}
+                  size="sm"
+                  className="flex-1 h-8 text-[12px] bg-slate-800 hover:bg-slate-700 text-white gap-1.5"
+                >
+                  <PauseCircle className="h-3.5 w-3.5" />
+                  {isSaving ? "Saving…" : "Pause Escalation"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNote("")}
+                  className="h-8 text-[12px] border-slate-200 text-slate-500 hover:bg-slate-50"
+                >
+                  Clear
+                </Button>
+              </div>
             </div>
           </div>
         </div>

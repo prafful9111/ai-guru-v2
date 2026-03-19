@@ -10,11 +10,12 @@ import { usePathname } from "next/navigation";
 interface AdminHeaderProps {
   handleLogout: () => void;
   title?: string;
+  description?: string;
   icon?: React.ReactNode;
   filters?: React.ReactNode;
 }
 
-export const AdminHeader = ({ handleLogout, title, icon, filters }: AdminHeaderProps) => {
+export const AdminHeader = ({ handleLogout, title, description, icon, filters }: AdminHeaderProps) => {
   const pathname = usePathname();
   const isUsersPage = pathname.startsWith("/admin/users");
   const [isFiltersOpen, setIsFiltersOpen] = React.useState(false);
@@ -29,12 +30,17 @@ export const AdminHeader = ({ handleLogout, title, icon, filters }: AdminHeaderP
             <Logo size="md" />
           </Link>
           
-          {title && (
-            <div className="hidden md:flex items-center gap-2 text-lg md:text-xl font-bold text-slate-800 tracking-tight leading-tight shrink-0">
-              <div className="text-[#2d87a4] flex items-center justify-center">
-                 {icon}
+          {(title || description) && (
+            <div className="hidden md:flex flex-col shrink-0 min-w-0 pr-4">
+              <div className="flex items-center gap-2 text-[16px] xl:text-[18px] font-bold text-slate-800 tracking-tight leading-tight">
+                {icon && <div className="text-[#2d87a4] flex items-center justify-center">{icon}</div>}
+                <span className="truncate">{title}</span>
               </div>
-              {title}
+              {description && (
+                <div className="text-[11px] font-medium text-slate-500 mt-0.5 truncate max-w-[300px] xl:max-w-[500px]">
+                  {description}
+                </div>
+              )}
             </div>
           )}
         </div>

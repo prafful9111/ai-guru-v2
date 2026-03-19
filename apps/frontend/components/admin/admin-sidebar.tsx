@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LayoutDashboard, Users, PanelLeftClose, PanelLeftOpen, Activity, Award, UserSquare2 } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 export const AdminSidebar = () => {
@@ -12,14 +12,29 @@ export const AdminSidebar = () => {
 
   const navItems = [
     {
-      label: "Assessment Monitoring",
+      label: "Overview",
       href: "/admin/dashboard",
       icon: LayoutDashboard,
     },
     {
-      label: "Staff Analysis",
+      label: "Assessment Results",
+      href: "/admin/results",
+      icon: Activity,
+    },
+    {
+      label: "Training Analytics",
       href: "/admin/staff-analysis",
       icon: Users,
+    },
+    {
+      label: "Leadership Board",
+      href: "/admin/leadership",
+      icon: Award,
+    },
+    {
+      label: "Staff Profile",
+      href: "/admin/staff-profile",
+      icon: UserSquare2,
     },
   ];
 
@@ -60,7 +75,7 @@ export const AdminSidebar = () => {
               title={isCollapsed ? item.label : undefined}
             >
               <Icon size={20} className={isActive ? "text-[#2d87a4]" : "text-slate-400"} />
-              {!isCollapsed && <span>{item.label}</span>}
+              {!isCollapsed && <span className="whitespace-nowrap text-sm">{item.label}</span>}
             </Link>
           );
         })}

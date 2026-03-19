@@ -9,10 +9,9 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Eye, ShieldAlert, Award, RotateCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Eye, ShieldAlert, Award, RotateCw, FileCheck, Search } from "lucide-react";
 import { ConversationDeepDiveSheet } from "./conversation-deep-dive-sheet";
 
 const MOCK_PERFORMANCE = [
@@ -26,10 +25,17 @@ const MOCK_PERFORMANCE = [
 export function RagPerformanceMatrix() {
   const [selectedStaff, setSelectedStaff] = useState<any>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const totalGreen = MOCK_PERFORMANCE.filter(p => p.status === "Green").length;
   const totalAmber = MOCK_PERFORMANCE.filter(p => p.status === "Amber").length;
   const totalRed = MOCK_PERFORMANCE.filter(p => p.status === "Red").length;
+
+  const filteredStaff = MOCK_PERFORMANCE.filter(s => 
+    s.name.toLowerCase().includes(search.toLowerCase()) || 
+    s.department.toLowerCase().includes(search.toLowerCase()) ||
+    s.scenario.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleOpenDeepDive = (staff: any) => {
     setSelectedStaff(staff);
@@ -37,112 +43,90 @@ export function RagPerformanceMatrix() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Summary Cards */}
-        <Card className="border-l-4 border-l-emerald-500 shadow-sm bg-white overflow-hidden">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">SOP Masters (Green)</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-gray-900 leading-none">{totalGreen}</span>
-                  <span className="text-xs font-semibold text-gray-400 uppercase">Staff</span>
-                </div>
-              </div>
-              <div className="h-10 w-10 bg-emerald-50 rounded-lg flex items-center justify-center">
-                <Award className="h-5 w-5 text-emerald-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-500 shadow-sm bg-white overflow-hidden">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Developing (Amber)</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-gray-900 leading-none">{totalAmber}</span>
-                  <span className="text-xs font-semibold text-gray-400 uppercase">Staff</span>
-                </div>
-              </div>
-              <div className="h-10 w-10 bg-amber-50 rounded-lg flex items-center justify-center">
-                <RotateCw className="h-5 w-5 text-amber-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-rose-500 shadow-sm bg-white overflow-hidden">
-          <CardContent className="p-4">
-             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">High Risk (Red)</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-gray-900 leading-none">{totalRed}</span>
-                  <span className="text-xs font-semibold text-gray-400 uppercase">Staff</span>
-                </div>
-              </div>
-              <div className="h-10 w-10 bg-rose-50 rounded-lg flex items-center justify-center">
-                <ShieldAlert className="h-5 w-5 text-rose-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-        <Table>
-          <TableHeader className="bg-gray-50">
-            <TableRow>
-              <TableHead className="font-semibold text-xs uppercase tracking-wider">Staff</TableHead>
-              <TableHead className="font-semibold text-xs uppercase tracking-wider">Scenario</TableHead>
-              <TableHead className="font-semibold text-xs uppercase tracking-wider text-center">Score</TableHead>
-              <TableHead className="font-semibold text-xs uppercase tracking-wider">Category</TableHead>
-              <TableHead className="text-right font-semibold text-xs uppercase tracking-wider">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {MOCK_PERFORMANCE.map((staff) => (
-              <TableRow key={staff.id} className="hover:bg-gray-50/50 cursor-pointer transition-colors" onClick={() => handleOpenDeepDive(staff)}>
-                <TableCell>
-                  <p className="font-medium text-gray-900">{staff.name}</p>
-                  <p className="text-xs text-gray-500">{staff.department}</p>
-                </TableCell>
-                <TableCell className="text-sm text-gray-700">{staff.scenario}</TableCell>
-                <TableCell className="text-center">
-                  <span className={`text-lg font-bold ${
-                    staff.status === 'Green' ? 'text-emerald-600' : 
-                    staff.status === 'Amber' ? 'text-amber-600' : 'text-rose-600'
-                  }`}>
-                    {staff.score}%
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {staff.status === "Green" && <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 shadow-none border-none pointer-events-none">Green (Pass)</Badge>}
-                  {staff.status === "Amber" && <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 shadow-none border-none pointer-events-none">Amber (Minor Fails)</Badge>}
-                  {staff.status === "Red" && <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-200 shadow-none border-none pointer-events-none">Red (Critical Fail)</Badge>}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
-                    <Button variant="ghost" size="sm" onClick={() => handleOpenDeepDive(staff)} className="text-[#2d87a4] hover:bg-blue-50 font-medium h-8 px-2">
-                       <Eye className="h-4 w-4 mr-1" />
-                       Review
-                    </Button>
-                    {staff.status === 'Green' ? (
-                      <Button variant="outline" size="sm" className="h-8 text-xs border-gray-200 shadow-sm text-gray-700">Certificate</Button>
-                    ) : staff.status === 'Amber' ? (
-                      <Button variant="outline" size="sm" className="h-8 text-xs border-amber-200 text-amber-700 hover:bg-amber-50 bg-amber-50/30">Assign Retry</Button>
-                    ) : (
-                      <Button variant="outline" size="sm" className="h-8 text-xs border-rose-200 text-rose-700 hover:bg-rose-50 bg-rose-50/30">Escalate</Button>
-                    )}
-                  </div>
-                </TableCell>
+    <div className="space-y-0">
+      {/* Enterprise Data Table */}
+      <div className="bg-white border border-slate-200 rounded-md overflow-hidden shadow-sm">
+        {/* Table Toolbar */}
+        <div className="flex items-center px-4 py-3 border-b border-slate-200 bg-slate-50">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Input
+              placeholder="Search staff, department..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 h-8 text-[12px] bg-white border-slate-200 w-full rounded-md focus-visible:ring-1 focus-visible:ring-slate-300"
+            />
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50 border-b border-slate-200 hover:bg-slate-50">
+                {["Staff Name", "Department", "Scenario", "Score", "Category", "Actions"].map((h) => (
+                  <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 py-3 px-4 whitespace-nowrap">
+                    {h}
+                  </TableHead>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredStaff.map((staff) => (
+                <TableRow 
+                  key={staff.id} 
+                  onClick={() => handleOpenDeepDive(staff)}
+                  className="cursor-pointer border-b border-slate-100 hover:bg-slate-50/50 transition-colors"
+                >
+                  <TableCell className="py-2.5 px-4 text-[13px] font-semibold text-slate-800">
+                    {staff.name}
+                  </TableCell>
+                  <TableCell className="py-2.5 px-4 text-[12px] font-medium text-slate-700">
+                    {staff.department}
+                  </TableCell>
+                  <TableCell className="py-2.5 px-4 text-[12px] text-slate-600">
+                    {staff.scenario}
+                  </TableCell>
+                  <TableCell className="py-2.5 px-4">
+                    <span className={`inline-flex items-center text-[12px] font-bold tabular-nums ${
+                      staff.status === 'Green' ? 'text-emerald-600' : 
+                      staff.status === 'Amber' ? 'text-amber-600' : 'text-red-700'
+                    }`}>
+                      {staff.score}%
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-2.5 px-4">
+                    <span className={`inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border ${
+                      staff.status === 'Green' ? 'bg-slate-100/50 text-emerald-700 border-emerald-200/50' : 
+                      staff.status === 'Amber' ? 'bg-slate-100/50 text-amber-700 border-amber-200/50' : 
+                      'bg-slate-100/50 text-red-700 border-red-200/50'
+                    }`}>
+                      {staff.status === 'Green' ? 'Green (Pass)' : staff.status === 'Amber' ? 'Amber (Minor Fails)' : 'Red (Critical Fail)'}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-2.5 px-4 text-right">
+                    <div className="flex justify-end gap-1.5" onClick={e => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenDeepDive(staff)} className="h-7 w-7 rounded border border-transparent hover:border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-white transition-colors">
+                         <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      {staff.status === 'Green' ? (
+                        <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-slate-600 border-slate-200 hover:bg-slate-50 gap-1">
+                          <FileCheck className="h-3 w-3" /> Cert
+                        </Button>
+                      ) : staff.status === 'Amber' ? (
+                        <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-slate-600 border-slate-200 hover:bg-slate-50 gap-1">
+                          <RotateCw className="h-3 w-3" /> Retry
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" className="h-7 px-2 text-[11px] text-slate-600 border-slate-200 hover:bg-slate-50 gap-1">
+                          <ShieldAlert className="h-3 w-3 text-red-500" /> Escalate
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <ConversationDeepDiveSheet 
