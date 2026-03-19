@@ -1,0 +1,33 @@
+"use client"
+
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+export interface SwitchProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  onCheckedChange?: (checked: boolean) => void;
+}
+
+const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
+  ({ className, onCheckedChange, checked, ...props }, ref) => {
+    return (
+      <label className="relative inline-flex items-center cursor-pointer">
+        <input 
+          type="checkbox" 
+          checked={checked}
+          onChange={(e) => onCheckedChange?.(e.target.checked)}
+          className="sr-only peer" 
+          ref={ref}
+          {...props} 
+        />
+        <div className={cn(
+          "w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600",
+          className
+        )}></div>
+      </label>
+    )
+  }
+)
+Switch.displayName = "Switch"
+
+export { Switch }

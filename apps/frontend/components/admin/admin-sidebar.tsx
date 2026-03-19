@@ -12,7 +12,7 @@ export const AdminSidebar = () => {
 
   const navItems = [
     {
-      label: "Overview",
+      label: "Assessment Monitoring",
       href: "/admin/dashboard",
       icon: LayoutDashboard,
     },
