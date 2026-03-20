@@ -12,7 +12,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { UserResponse } from "@repo/validation";
+import { STANDARD_SCENARIOS_VERSIONED, HierarchicalScenarioDropdown } from "./hierarchical-scenario-dropdown";
 import toast from "react-hot-toast";
 import { Calendar, KeyRound, Loader2, Save } from "lucide-react";
 
@@ -25,6 +33,7 @@ interface EditStaffDialogProps {
 export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [overrideScenarios, setOverrideScenarios] = useState<string[]>([]);
   
   // Local state for edits
   const [formData, setFormData] = useState({
@@ -32,8 +41,8 @@ export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogPr
     department: staff.department || "",
     unit: staff.unit || "",
     role: staff.role,
-    lastTrainingDate: staff.lastTrainingDate 
-      ? new Date(staff.lastTrainingDate).toISOString().split('T')[0] 
+    lastTrainingDate: (staff as any).lastTrainingDate 
+      ? new Date((staff as any).lastTrainingDate).toISOString().split('T')[0] 
       : "",
   });
 
@@ -135,19 +144,23 @@ export function EditStaffDialog({ open, onOpenChange, staff }: EditStaffDialogPr
                   <p className="text-xs text-muted-foreground">Assign a specific scenario directly to this staff member.</p>
                 </div>
              </div>
-             <div className="flex items-center gap-3 mt-2 pb-2">
-                 <select className="flex-1 h-9 bg-gray-50 border border-gray-200 rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                    <option value="">Select Scenario...</option>
-                    <option value="angry_patient">Angry Patient</option>
-                    <option value="code_blue">Code Blue</option>
-                 </select>
-                 <select className="flex-1 h-9 bg-gray-50 border border-gray-200 rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50">
-                    <option value="">Difficulty...</option>
-                    <option value="hard">Hard</option>
-                    <option value="expert">Expert</option>
-                 </select>
-                 <Button variant="secondary" size="sm" className="shrink-0 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">
-                    Assign
+             <div className="flex flex-col gap-3 mt-3 pb-2">
+                 <HierarchicalScenarioDropdown 
+                     selected={overrideScenarios}
+                     onChange={setOverrideScenarios}
+                 />
+                 <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    className="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+                    disabled={overrideScenarios.length === 0}
+                    onClick={() => {
+                        toast.success(`Assigned ${overrideScenarios.length} scenario(s) to ${staff.name}`);
+                        setOverrideScenarios([]);
+                        onOpenChange(false);
+                    }}
+                 >
+                    Directly Assign to Staff
                  </Button>
              </div>
           </div>

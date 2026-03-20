@@ -11,24 +11,74 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const STAFF_SCENARIOS: Record<string, string[]> = {
+  "EMP-09231": ["delayed-doctor", "calming-anxious"], // Michael
+  "EMP-04821": ["outside-food"], // Priya
+  "EMP-05512": ["angry-overcharged", "breaking-bad-news", "cold-food"], // Alisha
+  "EMP-01124": ["visiting-hours"], // Robert
+  "EMP-03882": [], // Lisa
+  "EMP-06771": ["delayed-doctor"], // Tom
+};
+
+const ALL_SCENARIOS = [
+  { value: "delayed-doctor", label: "Delayed doctor appointment" },
+  { value: "outside-food", label: "Outside food request" },
+  { value: "calming-anxious", label: "Calming an anxious patient" },
+  { value: "angry-overcharged", label: "Angry patient overcharged" },
+  { value: "breaking-bad-news", label: "Breaking a bad news" },
+  { value: "visiting-hours", label: "Out of visiting hours" },
+  { value: "cold-food", label: "Cold and late food" }
+];
+
 function CommandCenterHeaderInner() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const showStaffFilter = pathname === "/admin/staff-analysis" || pathname === "/admin/staff-profile";
-  
-  // Default to top performer
-  const currentStaff = searchParams.get("staff") || "EMP-09231";
 
-  const handleStaffChange = (val: string) => {
+  const [dynamicBatches, setDynamicBatches] = React.useState<{id: string; name: string}[]>([]);
+  React.useEffect(() => {
+    const fetchBatches = () => {
+       try {
+         const stored = JSON.parse(localStorage.getItem("mockBatches") || "[]");
+         setDynamicBatches(stored.reverse());
+       } catch(e) {}
+    };
+    fetchBatches();
+    window.addEventListener("bulk-upload-success", fetchBatches);
+    return () => window.removeEventListener("bulk-upload-success", fetchBatches);
+  }, []);
+  
+  // Active parameters
+  const currentStaff = searchParams.get("staff") || "all-staff";
+  const currentBatch = searchParams.get("batch") || "all-batches";
+  const currentDept = searchParams.get("dept") || "all-dept";
+  const currentUnit = searchParams.get("unit") || "all-unit";
+  const currentType = searchParams.get("type") || "all-type";
+  const currentDate = searchParams.get("date") || "last-30";
+
+  const handleParamChange = (key: string, val: string, defaultVal: string) => {
     const params = new URLSearchParams(searchParams);
-    if (val === "all-staff") {
-      params.delete("staff");
+    if (val === defaultVal) {
+      params.delete(key);
     } else {
-      params.set("staff", val);
+      params.set(key, val);
     }
+    
+    // Automatically reset Assessment if switching staff member causes a conflict
+    if (key === "staff" && val !== "all-staff") {
+      const allowed = STAFF_SCENARIOS[val] || [];
+      const activeType = params.get("type");
+      if (activeType && activeType !== "all-type" && !allowed.includes(activeType)) {
+        params.delete("type");
+      }
+    }
+    
     router.push(`${pathname}?${params.toString()}`);
   };
+
+  const availableScenarios = currentStaff === "all-staff" 
+    ? ALL_SCENARIOS 
+    : ALL_SCENARIOS.filter(s => STAFF_SCENARIOS[currentStaff]?.includes(s.value));
 
   return (
     <div className="sticky top-[73px] z-20 flex flex-wrap items-center justify-between gap-3 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-3 mb-6 shadow-sm shadow-slate-100/50">
@@ -38,8 +88,7 @@ function CommandCenterHeaderInner() {
       </div>
       
       <div className="flex flex-wrap items-center gap-2 ml-auto">
-         {showStaffFilter && (
-           <Select value={currentStaff} onValueChange={handleStaffChange}>
+         <Select value={currentStaff} onValueChange={(v) => handleParamChange("staff", v, "all-staff")}>
              <SelectTrigger className="h-8 w-[130px] sm:w-[150px] border-slate-200 bg-white text-[12px] font-medium text-slate-700">
                <div className="flex items-center gap-1.5">
                  <User className="h-3.5 w-3.5 text-slate-400" />
@@ -51,11 +100,13 @@ function CommandCenterHeaderInner() {
                <SelectItem value="EMP-09231">Michael Chang</SelectItem>
                <SelectItem value="EMP-04821">Priya Sharma</SelectItem>
                <SelectItem value="EMP-05512">Alisha Davis</SelectItem>
+               <SelectItem value="EMP-01124">Robert Jones</SelectItem>
+               <SelectItem value="EMP-03882">Lisa Smith</SelectItem>
+               <SelectItem value="EMP-06771">Tom Kumar</SelectItem>
              </SelectContent>
            </Select>
-         )}
 
-         <Select defaultValue="all-dept">
+         <Select value={currentDept} onValueChange={(v) => handleParamChange("dept", v, "all-dept")}>
           <SelectTrigger className="h-8 w-[110px] sm:w-[130px] border-slate-200 bg-white text-[12px] font-medium text-slate-700">
             <SelectValue placeholder="Department" />
           </SelectTrigger>
@@ -67,7 +118,7 @@ function CommandCenterHeaderInner() {
           </SelectContent>
         </Select>
 
-        <Select defaultValue="all-unit">
+        <Select value={currentUnit} onValueChange={(v) => handleParamChange("unit", v, "all-unit")}>
           <SelectTrigger className="h-8 w-[110px] sm:w-[120px] border-slate-200 bg-white text-[12px] font-medium text-slate-700">
             <SelectValue placeholder="Unit" />
           </SelectTrigger>
@@ -79,19 +130,37 @@ function CommandCenterHeaderInner() {
           </SelectContent>
         </Select>
 
-        <Select defaultValue="all-type">
+        <Select value={currentType} onValueChange={(v) => handleParamChange("type", v, "all-type")}>
           <SelectTrigger className="h-8 w-[120px] sm:w-[140px] border-slate-200 bg-white text-[12px] font-medium text-slate-700">
             <SelectValue placeholder="Assessment" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all-type">All Assessments</SelectItem>
-            <SelectItem value="hipaa">HIPAA Recert</SelectItem>
-            <SelectItem value="code-blue">Code Blue</SelectItem>
-            <SelectItem value="deescalation">De-escalation</SelectItem>
+            <SelectItem value="all-type">All Scenarios</SelectItem>
+            {availableScenarios.map(scen => (
+               <SelectItem key={scen.value} value={scen.value}>{scen.label}</SelectItem>
+            ))}
+            {currentStaff !== "all-staff" && availableScenarios.length === 0 && (
+               <SelectItem value="none" disabled>No modules assigned</SelectItem>
+            )}
           </SelectContent>
         </Select>
 
-        <Select defaultValue="last-30">
+        {/* Training Group Filter */}
+        <Select value={currentBatch} onValueChange={(v) => handleParamChange("batch", v, "all-batches")}>
+          <SelectTrigger className="h-8 w-[120px] sm:w-[150px] border-slate-200 bg-white text-[12px] font-medium text-slate-700">
+            <SelectValue placeholder="Training Group" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all-batches">All Training Groups</SelectItem>
+            <SelectItem value="BATCH-2026-03-20" disabled>Group: 2026-03-20 (20 users)</SelectItem>
+            <SelectItem value="BATCH-2026-03-19" disabled>Group: 2026-03-19 (15 users)</SelectItem>
+            {dynamicBatches.map(b => (
+              <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={currentDate} onValueChange={(v) => handleParamChange("date", v, "last-30")}>
           <SelectTrigger className="h-8 w-[120px] sm:w-[140px] border-slate-200 bg-white text-[12px] font-medium text-slate-700 data-[state=open]:ring-1">
             <div className="flex items-center gap-1.5">
               <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />

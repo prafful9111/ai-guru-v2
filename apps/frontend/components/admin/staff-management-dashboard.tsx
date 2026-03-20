@@ -49,8 +49,8 @@ export function StaffManagementDashboard() {
             </Card>
           </TabsContent>
           <TabsContent value="add" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-            <Card className="border border-gray-200 shadow-sm bg-white/50 backdrop-blur rounded-xl overflow-hidden">
-              <CardHeader className="pb-3 border-b border-gray-50 mb-4 bg-gray-50/50">
+            <Card className="border border-gray-200 shadow-sm bg-white/50 backdrop-blur rounded-xl">
+              <CardHeader className="pb-3 border-b border-gray-50 mb-4 bg-gray-50/50 rounded-t-xl">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <div className="p-1.5 bg-blue-100/50 rounded-md text-blue-600"><UserPlus className="h-4 w-4" /></div>
                   Create Single User
@@ -78,8 +78,8 @@ export function StaffManagementDashboard() {
             </Card>
           </TabsContent>
           <TabsContent value="assignment" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-            <Card className="border border-gray-200 shadow-sm bg-white/50 backdrop-blur rounded-xl overflow-hidden">
-              <CardHeader className="pb-3 border-b border-gray-50 mb-4 bg-gray-50/50">
+            <Card className="border border-gray-200 shadow-sm bg-white/50 backdrop-blur rounded-xl">
+              <CardHeader className="pb-3 border-b border-gray-50 mb-4 bg-gray-50/50 rounded-t-xl">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <div className="p-1.5 bg-indigo-100/50 rounded-md text-indigo-600"><Network className="h-4 w-4" /></div>
                   Assignment Engine

@@ -24,7 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, UserPlus, Eye, EyeOff } from "lucide-react";
+import { Loader2, UserPlus, Eye, EyeOff, Check, ChevronDown } from "lucide-react";
+
+import { HierarchicalScenarioDropdown } from "./hierarchical-scenario-dropdown";
+// Flat multi select removed in favor of HierarchicalScenarioDropdown
 
 export function AddSingleUserTab() {
   const [showPassword, setShowPassword] = useState(false);
@@ -40,7 +43,7 @@ export function AddSingleUserTab() {
       department: "",
       unit: "",
       role: "STAFF",
-      scenario: "",
+      scenario: [],
       difficultyLevel: "",
     },
   });
@@ -189,49 +192,25 @@ export function AddSingleUserTab() {
               <FormField
                 control={form.control}
                 name="scenario"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Scenario</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-white">
-                          <SelectValue placeholder="Select scenario" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Financial Counseling">Financial Counseling</SelectItem>
-                        <SelectItem value="Patient Onboarding">Patient Onboarding</SelectItem>
-                        <SelectItem value="Discharge Process">Discharge Process</SelectItem>
-                        <SelectItem value="Emergency Triage">Emergency Triage</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const selectedScenarios = Array.isArray(field.value) ? field.value : [];
+                  return (
+                    <FormItem className="md:col-span-2">
+                       <FormLabel>Assigned Scenarios</FormLabel>
+                       <FormControl>
+                         <HierarchicalScenarioDropdown
+                           selected={selectedScenarios}
+                           onChange={field.onChange}
+                         />
+                       </FormControl>
+                       <FormDescription>Select one or more scenario versions from the dropdown.</FormDescription>
+                       <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
 
-              <FormField
-                control={form.control}
-                name="difficultyLevel"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Difficulty Level</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-white">
-                          <SelectValue placeholder="Select level" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Beginner">Beginner</SelectItem>
-                        <SelectItem value="Intermediate">Intermediate</SelectItem>
-                        <SelectItem value="Advanced">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Difficulty Level has been removed as it is now securely tied into the scenario version selection. */}
             </div>
           </div>
 

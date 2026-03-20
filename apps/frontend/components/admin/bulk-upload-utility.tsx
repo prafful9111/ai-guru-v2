@@ -16,11 +16,30 @@ import { Badge } from "@/components/ui/badge";
 import toast from "react-hot-toast";
 
 type ParsedRow = {
-  Name: string;
-  ID: string;
-  Dept: string;
-  "Last Training Date": string;
-  [key: string]: string; // Allow other columns
+  [key: string]: string; // Allow any column
+};
+
+const extractFields = (row: ParsedRow) => {
+  const normRow: Record<string, string> = {};
+  Object.entries(row).forEach(([k, v]) => {
+    normRow[k.toLowerCase().replace(/[^a-z0-9]/g, '')] = v as string;
+  });
+  
+  const getV = (keys: string[]) => {
+    for (const k of keys) {
+       if (row[k]) return row[k];
+       const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+       if (normRow[cleanK]) return normRow[cleanK];
+    }
+    return null;
+  };
+
+  return {
+    name: getV(["Name", "EmployeeName", "StaffName", "FullName"]) || "Unknown",
+    staffId: getV(["ID", "StaffID", "EmployeeID", "StaffCode"]) || "—",
+    department: getV(["Dept", "Department", "Function", "Division"]) || "—",
+    lastTrainingDate: getV(["LastTrainingDate", "TrainingDate", "Date"]) || "—",
+  };
 };
 
 export function BulkUploadUtility() {
@@ -85,17 +104,37 @@ export function BulkUploadUtility() {
     if (!data.length) return;
     setIsUploading(true);
     try {
-      // Mock API Upload Payload
-      const payload = data.map(row => ({
-         name: row.Name || row.name || "Unknown",
-         staffId: row.ID || row.id || row.staffId,
-         department: row.Dept || row.department || row.Department,
-         lastTrainingDate: row["Last Training Date"] || row.lastTrainingDate || null,
-      }));
+      const batchId = `BATCH-${Date.now()}`;
+      const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const batchName = `Group: ${dateStr} (${data.length} users)`;
+
+      const payload = data.map(row => {
+         const extracted = extractFields(row);
+         return {
+            name: extracted.name,
+            staffId: extracted.staffId === "—" ? null : extracted.staffId,
+            department: extracted.department === "—" ? null : extracted.department,
+            lastTrainingDate: extracted.lastTrainingDate === "—" ? null : extracted.lastTrainingDate,
+            batchId,
+         };
+      });
 
       console.log("Bulk uploading:", payload);
       await new Promise(res => setTimeout(res, 1500));
-      toast.success(`Successfully uploaded ${data.length} staff records!`);
+      
+      const existingBatches = JSON.parse(localStorage.getItem("mockBatches") || "[]");
+      const newBatch = { id: batchId, name: batchName, createdAt: new Date().toISOString() };
+      localStorage.setItem("mockBatches", JSON.stringify([...existingBatches, newBatch]));
+
+      // Dump to localStorage to trick the frontend Directory Table into fetching them
+      const existing = JSON.parse(localStorage.getItem("mockUploadedBatch") || "[]");
+      const combined = [...existing, ...payload];
+      localStorage.setItem("mockUploadedBatch", JSON.stringify(combined));
+      
+      // Dispatch a custom window event for instant table refresh
+      window.dispatchEvent(new CustomEvent("bulk-upload-success"));
+
+      toast.success(`Successfully uploaded ${data.length} staff records securely to ${batchId}!`);
       handleRemoveFile();
     } catch (error) {
       toast.error("Upload failed");
@@ -179,14 +218,17 @@ export function BulkUploadUtility() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.slice(0, 5).map((row, i) => (
-                  <TableRow key={i} className="hover:bg-gray-50/50">
-                    <TableCell className="py-2.5 font-medium">{row.Name || row.name || <AlertCircle className="h-4 w-4 text-amber-500"/>}</TableCell>
-                    <TableCell className="py-2.5 font-mono text-xs">{row.ID || row.id || row.staffId || "—"}</TableCell>
-                    <TableCell className="py-2.5 text-sm">{row.Dept || row.department || row.Department || "—"}</TableCell>
-                    <TableCell className="py-2.5 text-sm">{row["Last Training Date"] || row.lastTrainingDate || "—"}</TableCell>
-                  </TableRow>
-                ))}
+                {data.slice(0, 5).map((row, i) => {
+                  const extracted = extractFields(row);
+                  return (
+                    <TableRow key={i} className="hover:bg-gray-50/50">
+                      <TableCell className="py-2.5 font-medium">{extracted.name || <AlertCircle className="h-4 w-4 text-amber-500"/>}</TableCell>
+                      <TableCell className="py-2.5 font-mono text-xs">{extracted.staffId}</TableCell>
+                      <TableCell className="py-2.5 text-sm">{extracted.department}</TableCell>
+                      <TableCell className="py-2.5 text-sm">{extracted.lastTrainingDate}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

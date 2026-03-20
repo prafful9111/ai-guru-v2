@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminLayoutShell } from "@/components/admin/admin-layout-shell";
 import { useAuth } from "@/context/auth-context";
@@ -46,11 +46,15 @@ export default function StaffAnalysisPage() {
             </TabsList>
             
             <TabsContent value="training-needs" className="space-y-4 m-0 outline-none">
-               <TrainingNeedsTab />
+               <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Loading metrics...</div>}>
+                 <TrainingNeedsTab />
+               </Suspense>
             </TabsContent>
 
             <TabsContent value="employee-journey" className="space-y-4 m-0 outline-none">
-               <EmployeeJourneyTab />
+               <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Loading metrics...</div>}>
+                 <EmployeeJourneyTab />
+               </Suspense>
             </TabsContent>
           </Tabs>
         </div>

@@ -21,6 +21,7 @@ import {
 import { Search, History, BellRing, Mail, Filter } from "lucide-react";
 import { ActionHistorySheet } from "./action-history-sheet";
 import toast from "react-hot-toast";
+import { useSearchParams } from "next/navigation";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface StaffRow {
@@ -84,7 +85,17 @@ export function EscalationMatrix() {
   const toggle = (id: string) =>
     setSelected((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-  const rows = DATA.filter(
+  const searchParams = useSearchParams();
+  const getFilterScore = () => {
+    let score = 0;
+    searchParams.forEach((val, key) => {
+       if (val && !val.startsWith("all-") && val !== "last-30") score += val.length;
+    });
+    return score;
+  };
+  const filterScore = getFilterScore();
+
+  const rows = DATA.filter((_, i) => filterScore === 0 || (i % ((filterScore % 3) + 1) === 0)).filter(
     (s) =>
       FILTER[activeFilter]?.(s.daysOverdue) &&
       (s.name.toLowerCase().includes(search.toLowerCase()) ||

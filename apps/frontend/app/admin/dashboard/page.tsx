@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { AdminHeader } from "@/components/admin/admin-header";
@@ -49,11 +49,15 @@ export default function AdminDashboard() {
             </TabsList>
             
             <TabsContent value="overview" className="space-y-4 m-0">
-               <StatusFunnel />
+               <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Loading metrics...</div>}>
+                 <StatusFunnel />
+               </Suspense>
             </TabsContent>
 
             <TabsContent value="escalations" className="space-y-4 m-0">
-               <EscalationMatrix />
+               <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Loading escalations...</div>}>
+                 <EscalationMatrix />
+               </Suspense>
             </TabsContent>
           </Tabs>
         </div>

@@ -32,7 +32,89 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2, UserPlus, Eye, EyeOff } from "lucide-react";
+import { Loader2, UserPlus, Eye, EyeOff, Check, ChevronDown } from "lucide-react";
+
+export const STANDARD_SCENARIOS_VERSIONED = [
+  "Delayed doctor appointment (v1) - Beginner",
+  "Delayed doctor appointment (v2) - Intermediate",
+  "Outside food request from patient (v1) - Beginner",
+  "Outside food request from patient (v2) - Intermediate",
+  "Calming an anxious patient (v1) - Beginner",
+  "Calming an anxious patient (v2) - Advanced",
+  "Angry patient overcharged (v1) - Intermediate",
+  "Angry patient overcharged (v2) - Advanced",
+  "Breaking a bad news (v1) - Intermediate",
+  "Breaking a bad news (v2) - Expert",
+  "Patient requesting outside of visiting hours to meet a patient (v1) - Beginner",
+  "Patient requesting outside of visiting hours to meet a patient (v2) - Intermediate",
+  "Cold and late food (v1) - Beginner",
+  "Cold and late food (v2) - Intermediate"
+];
+
+function MultiSelectDropdown({ options, selected, onChange }: { options: string[], selected: string[], onChange: (val: string[]) => void }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleOption = (opt: string) => {
+    if (selected.includes(opt)) onChange(selected.filter((o: string) => o !== opt));
+    else onChange([...selected, opt]);
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <div 
+        onClick={() => setOpen(!open)}
+        className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 cursor-pointer"
+      >
+        <div className="flex flex-wrap gap-1 items-center truncate max-w-[90%]">
+          {selected.length === 0 ? (
+            <span className="text-slate-500">Select scenarios...</span>
+          ) : (
+            <div className="flex gap-1 overflow-hidden truncate">
+               {selected.slice(0, 2).map((s: string) => (
+                  <span key={s} className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded text-[11px] font-medium border border-slate-200 truncate max-w-[120px]">{s}</span>
+               ))}
+               {selected.length > 2 && (
+                  <span className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded text-[11px] font-medium border border-slate-200">+{selected.length - 2}</span>
+               )}
+            </div>
+          )}
+        </div>
+        <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+      </div>
+      
+      {open && (
+        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 text-base shadow-md focus:outline-none sm:text-sm">
+          {options.map((opt) => {
+            const isSelected = selected.includes(opt);
+            return (
+              <div 
+                key={opt}
+                onClick={() => toggleOption(opt)}
+                className="relative flex w-full select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-slate-100 cursor-pointer text-slate-700"
+              >
+                <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                  {isSelected && <Check className="h-4 w-4" />}
+                </span>
+                <span className={`${isSelected ? 'font-semibold text-slate-900' : 'font-medium'}`}>{opt}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface AddUserDialogProps {
   trigger?: React.ReactNode;
@@ -53,7 +135,7 @@ export function AddUserDialog({ trigger }: AddUserDialogProps) {
       department: "",
       unit: "",
       role: "STAFF",
-      scenario: "",
+      scenario: [],
       difficultyLevel: "",
     },
   });
@@ -230,49 +312,26 @@ export function AddUserDialog({ trigger }: AddUserDialogProps) {
               <FormField
                 control={form.control}
                 name="scenario"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Scenario</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select scenario" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Financial Counseling">Financial Counseling</SelectItem>
-                        <SelectItem value="Patient Onboarding">Patient Onboarding</SelectItem>
-                        <SelectItem value="Discharge Process">Discharge Process</SelectItem>
-                        <SelectItem value="Emergency Triage">Emergency Triage</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const selectedScenarios = Array.isArray(field.value) ? field.value : [];
+                  return (
+                    <FormItem className="md:col-span-2">
+                       <FormLabel>Assigned Scenarios</FormLabel>
+                       <FormControl>
+                         <MultiSelectDropdown 
+                           options={STANDARD_SCENARIOS_VERSIONED}
+                           selected={selectedScenarios}
+                           onChange={field.onChange}
+                         />
+                       </FormControl>
+                       <FormDescription>Select one or more scenario versions from the dropdown.</FormDescription>
+                       <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
 
-              <FormField
-                control={form.control}
-                name="difficultyLevel"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Difficulty Level</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select level" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Beginner">Beginner</SelectItem>
-                        <SelectItem value="Intermediate">Intermediate</SelectItem>
-                        <SelectItem value="Advanced">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Difficulty Level removed because it is dictated by the selected scenario version. */}
             </div>
           </div>
 

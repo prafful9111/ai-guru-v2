@@ -16,7 +16,7 @@ const TIMELINE = [
 export function EmployeeJourneyTab() {
   const searchParams = useSearchParams();
   const rawStaff = searchParams.get("staff");
-  const staffParam = rawStaff && rawStaff !== "all-staff" ? rawStaff : (!rawStaff ? "EMP-09231" : null);
+  const staffParam = rawStaff && rawStaff !== "all-staff" ? rawStaff : null;
   
   // Minimal manual map based on the existing Matrix data IDs
   const STAFF_DETAILS: Record<string, {name: string, initials: string, role: string, dept: string}> = {

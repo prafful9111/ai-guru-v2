@@ -22,9 +22,9 @@ const STAFF_DATA = [
     assigned: 4,
     overdue: 1,
     scenarios: [
-      { id: 1, name: "Emergency Admission SOP", status: "completed", score: 92, date: "Mar 14, 2026", language: "English", difficulty: "Advanced", unit: "ICU Triage" },
-      { id: 2, name: "Angry Patient De-escalation", status: "in-progress", elapsed: "18 mins", language: "Hindi", voiceActive: true, difficulty: "Moderate", unit: "General Wards" },
-      { id: 3, name: "Infection Control Protocols", status: "overdue", daysOverdue: 10, language: "Hindi", difficulty: "Mandatory", unit: "All Staff" },
+      { id: 1, name: "Delayed doctor appointment", status: "completed", score: 92, date: "Mar 14, 2026", language: "English", difficulty: "Advanced", unit: "ICU Triage" },
+      { id: 2, name: "Calming an anxious patient", status: "in-progress", elapsed: "18 mins", language: "Hindi", voiceActive: true, difficulty: "Moderate", unit: "General Wards" },
+      { id: 3, name: "Outside food request from patient", status: "overdue", daysOverdue: 10, language: "Hindi", difficulty: "Mandatory", unit: "All Staff" },
     ],
     timeline: [
       { date: "Mar 19, 2026 · 09:12", event: `System escalated "Infection Control" to Unit Manager`, type: "red" },
@@ -49,8 +49,8 @@ const STAFF_DATA = [
     assigned: 5,
     overdue: 0,
     scenarios: [
-      { id: 4, name: "Pediatric Advanced Life Support", status: "completed", score: 96, date: "Mar 10, 2026", language: "English", difficulty: "Expert", unit: "NICU/PICU" },
-      { id: 5, name: "Newborn Screening Protocol", status: "completed", score: 92, date: "Mar 05, 2026", language: "English", difficulty: "Advanced", unit: "Pediatrics" },
+      { id: 4, name: "Breaking a bad news", status: "completed", score: 96, date: "Mar 10, 2026", language: "English", difficulty: "Expert", unit: "NICU/PICU" },
+      { id: 5, name: "Patient requesting outside of visiting hours to meet a patient", status: "completed", score: 92, date: "Mar 05, 2026", language: "English", difficulty: "Advanced", unit: "Pediatrics" },
     ],
     timeline: [
       { date: "Mar 10, 2026 · 11:45", event: `Completed "PALS Certification" with High Distinction`, type: "green" },
@@ -72,8 +72,8 @@ const STAFF_DATA = [
     assigned: 3,
     overdue: 2,
     scenarios: [
-      { id: 6, name: "Trauma Room Hygiene", status: "overdue", daysOverdue: 5, language: "English", difficulty: "Mandatory", unit: "Emergency" },
-      { id: 7, name: "Gurney Maintenance", status: "overdue", daysOverdue: 12, language: "English", difficulty: "Basic", unit: "Logistics" },
+      { id: 6, name: "Cold and late food", status: "overdue", daysOverdue: 5, language: "English", difficulty: "Mandatory", unit: "Emergency" },
+      { id: 7, name: "Angry patient overcharged", status: "overdue", daysOverdue: 12, language: "English", difficulty: "Basic", unit: "Logistics" },
     ],
     timeline: [
       { date: "Mar 18, 2026 · 16:20", event: "Final notice for overdue Trauma Hygiene assessment", type: "red" },
@@ -81,6 +81,72 @@ const STAFF_DATA = [
     ],
     langPerf: [
       { lang: "English", completed: 0, avgScore: 0, avgTime: "N/A" },
+    ]
+  },
+  {
+    id: "EMP-01124",
+    initials: "RJ",
+    name: "Robert Jones",
+    role: "Emergency RN",
+    branch: "Delhi North",
+    dept: "Emergency (ER)",
+    lang: "English / Hindi",
+    overallScore: 77,
+    assigned: 3,
+    overdue: 0,
+    scenarios: [
+      { id: 8, name: "Calming an anxious patient", status: "completed", score: 88, date: "Mar 16, 2026", language: "English", difficulty: "Moderate", unit: "Emergency" },
+      { id: 9, name: "Delayed doctor appointment", status: "completed", score: 65, date: "Mar 02, 2026", language: "Hindi", difficulty: "Advanced", unit: "Emergency" },
+    ],
+    timeline: [
+      { date: "Mar 16, 2026 · 14:00", event: "Completed De-escalation module.", type: "green" },
+    ],
+    langPerf: [
+      { lang: "English", completed: 1, avgScore: 88, avgTime: "10 mins" },
+      { lang: "Hindi", completed: 1, avgScore: 65, avgTime: "15 mins" },
+    ]
+  },
+  {
+    id: "EMP-03882",
+    initials: "LS",
+    name: "Lisa Smith",
+    role: "Admin Staff",
+    branch: "Mumbai Central",
+    dept: "Front Desk",
+    lang: "English / Marathi",
+    overallScore: 70,
+    assigned: 2,
+    overdue: 1,
+    scenarios: [
+      { id: 10, name: "Angry patient overcharged", status: "overdue", daysOverdue: 2, language: "English", difficulty: "Advanced", unit: "Administration" },
+    ],
+    timeline: [
+      { date: "Mar 18, 2026 · 09:00", event: "Warning email sent for overdue Billing module", type: "amber" },
+    ],
+    langPerf: [
+      { lang: "English", completed: 0, avgScore: 0, avgTime: "N/A" },
+    ]
+  },
+  {
+    id: "EMP-06771",
+    initials: "TK",
+    name: "Tom Kumar",
+    role: "Nurse Grade I",
+    branch: "Bangalore South",
+    dept: "Emergency (ER)",
+    lang: "English / Kannada",
+    overallScore: 62,
+    assigned: 4,
+    overdue: 2,
+    scenarios: [
+      { id: 11, name: "Outside food request from patient", status: "overdue", daysOverdue: 14, language: "English", difficulty: "Mandatory", unit: "All Staff" },
+      { id: 12, name: "Cold and late food", status: "completed", score: 62, date: "Feb 20, 2026", language: "Kannada", difficulty: "Basic", unit: "All Staff" },
+    ],
+    timeline: [
+      { date: "Mar 05, 2026 · 10:00", event: "Escalated Patient Safety overdue to head nurse.", type: "red" },
+    ],
+    langPerf: [
+      { lang: "Kannada", completed: 1, avgScore: 62, avgTime: "8 mins" },
     ]
   }
 ];
@@ -110,10 +176,10 @@ export function StaffProfileView() {
   const searchParams = useSearchParams();
   const staffParam = searchParams.get("staff");
 
-  // Sort by performance and pick top one as default if no staff selected
+  // Sort by performance and pick top one as default if no staff selected or if all-staff is passed
   const sortedStaff = useMemo(() => [...STAFF_DATA].sort((a, b) => b.overallScore - a.overallScore), []);
   
-  const selectedId = staffParam || sortedStaff[0]?.id || "";
+  const selectedId = (staffParam && staffParam !== "all-staff") ? staffParam : sortedStaff[0]?.id || "";
   const staff = useMemo(() => STAFF_DATA.find(s => s.id === selectedId) || sortedStaff[0] || STAFF_DATA[0], [selectedId, sortedStaff]);
 
   if (!staff) return null; // Defensive check for TS

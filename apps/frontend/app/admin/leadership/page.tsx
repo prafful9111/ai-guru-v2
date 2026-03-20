@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { AdminHeader } from "@/components/admin/admin-header";
@@ -29,7 +29,9 @@ export default function LeadershipPage() {
         <CommandCenterHeader />
         
         <div className="px-4 md:px-8 mt-2 animate-in fade-in duration-500">
-           <LeadershipBoardTab />
+           <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Loading leadership board...</div>}>
+             <LeadershipBoardTab />
+           </Suspense>
         </div>
       </main>
     </AdminLayoutShell>

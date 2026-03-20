@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { 
-  TrendingUp, Target, Search, Users, ShieldAlert, BookOpen, UserPlus, FileText
+  TrendingUp, Target, Search, Users, ShieldAlert, BookOpen, UserPlus, FileText, Lightbulb, XCircle
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,34 @@ const MATRIX_DATA = [
 
 const SKILLS_LABELS = ["Patient Safety", "Clinical Protocols", "SOP Compliance", "Data Security"];
 
-const GAPS_DATA = [
-  { name: "Data Security", score: 95 },
-  { name: "Patient Safety", score: 91 },
-  { name: "Clinical Protocols", score: 84 },
-  { name: "SOP Compliance", score: 62 },
-];
+const MOCK_INSIGHTS = {
+  all: {
+    critical: [
+      { text: "Failed to greet with 'Namaste'.", count: 45, percentage: "22%" },
+      { text: "Failed to introduce self by name and designation.", count: 38, percentage: "18%" },
+      { text: "Used dismissive/defensive language ('What is your problem', 'Calm down').", count: 25, percentage: "12%" },
+      { text: "Failed to offer a sincere apology for the significant delay.", count: 30, percentage: "15%" },
+    ],
+    behavioral: [
+      "The interaction frequently begins with dismissive language which escalated the patient's frustration in 30% of cases.",
+      "Most staff members successfully performed an interim clinical check by offering a vitals check and proactively contacted the doctor's team.",
+      "Overall empathy indicators drop significantly during high-stress scenarios involving angry families."
+    ]
+  },
+  person: {
+    critical: [
+      { text: "Failed to greet with 'Namaste'." },
+      { text: "Failed to introduce self by name and designation." },
+      { text: "Used dismissive/defensive language ('What is your problem', 'Calm down')." },
+      { text: "Failed to offer a sincere apology for the significant delay." },
+    ],
+    behavioral: [
+      "The staff member failed to provide the mandatory 'Namaste' greeting and personal introduction.",
+      "The interaction began with dismissive language ('What is your problem', 'Calm down'), which escalated the patient's frustration.",
+      "The staff member successfully performed an interim clinical check by offering a vitals check and proactively contacted the doctor's team to provide a status update."
+    ]
+  }
+};
 
 function getHeatmapSquare(score: number) {
   if (score >= 85) return "bg-[#34d399] border-[#059669]"; // Muted Emerald
@@ -46,7 +68,7 @@ export function TrainingNeedsTab() {
   
   const searchParams = useSearchParams();
   const rawStaff = searchParams.get("staff");
-  const staffParam = rawStaff && rawStaff !== "all-staff" ? rawStaff : (!rawStaff ? "EMP-09231" : null);
+  const staffParam = rawStaff && rawStaff !== "all-staff" ? rawStaff : null;
 
   const isSpecificStaff = !!staffParam;
   const selectedStaffObj = isSpecificStaff ? MATRIX_DATA.find(m => m.id === staffParam) : null;
@@ -106,82 +128,54 @@ export function TrainingNeedsTab() {
 
       </div>
 
-      {/* SECTION B: Dynamic Strengths & Competency Gaps Analysis */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-0 overflow-hidden">
-         <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-           <h3 className="text-[15px] font-semibold text-slate-800">
-             {selectedStaffObj ? `Proficiency Insights: ${selectedStaffObj.name}` : 'Organization-Wide Competency Overview'}
-           </h3>
+      {/* SECTION B: Key Insights */}
+      <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 overflow-hidden">
+         <div className="flex items-center gap-2 mb-6">
+           <Lightbulb className="h-5 w-5 text-amber-500" />
+           <h3 className="text-[18px] font-bold text-slate-900 tracking-tight">Key Insights</h3>
          </div>
          
-         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-           
-           {/* Top Strengths */}
-           <div className="p-6 bg-white">
-             <div className="flex items-center gap-2 mb-4 text-emerald-600">
-               <TrendingUp className="h-5 w-5" />
-               <h4 className="text-[14px] font-bold">Top Strengths</h4>
-             </div>
-             
-             <div className="space-y-4">
-               {(() => {
-                 const data: { name: string; score: number }[] = selectedStaffObj ? [
-                   { name: "Patient Safety", score: selectedStaffObj.skills[0] ?? 0 },
-                   { name: "Clinical Protocols", score: selectedStaffObj.skills[1] ?? 0 },
-                   { name: "SOP Compliance", score: selectedStaffObj.skills[2] ?? 0 },
-                   { name: "Data Security", score: selectedStaffObj.skills[3] ?? 0 },
-                 ] : GAPS_DATA;
-                 const strengths = [...data].sort((a,b) => b.score - a.score).slice(0, 2);
-                 return strengths.map((item, i) => (
-                   <div key={i} className="flex justify-between items-center p-3 rounded-lg border border-emerald-100 bg-emerald-50/30">
-                     <span className="text-[13px] font-semibold text-emerald-800">{item.name}</span>
-                     <span className="text-[14px] font-bold text-emerald-600 bg-white px-2 py-0.5 rounded shadow-sm border border-emerald-100">{item.score}%</span>
-                   </div>
-                 ));
-               })()}
-             </div>
-             <p className="text-[11px] text-slate-500 mt-4 leading-relaxed">
-               {selectedStaffObj 
-                 ? `${selectedStaffObj.name} demonstrates excellent capabilities in these areas, consistently performing above the 85% benchmark.`
-                 : "Across all departments, these protocols represent our strongest compliance areas."}
-             </p>
+         <div className="bg-[#fff9f9] border border-[#fecaca] rounded-xl p-5 mb-6">
+           <div className="flex items-center gap-2 mb-4 text-[#b91c1c]">
+             <XCircle className="h-5 w-5" />
+             <h4 className="text-[13px] font-bold uppercase tracking-wider">Critical Violations</h4>
            </div>
            
-           {/* Key Shortcomings / Areas for Improvement */}
-           <div className="p-6 bg-white">
-             <div className="flex items-center gap-2 mb-4 text-amber-600">
-               <ShieldAlert className="h-5 w-5" />
-               <h4 className="text-[14px] font-bold">Priority Areas for Improvement</h4>
-             </div>
-             
-             <div className="space-y-4">
-               {(() => {
-                 const data: { name: string; score: number }[] = selectedStaffObj ? [
-                   { name: "Patient Safety", score: selectedStaffObj.skills[0] ?? 0 },
-                   { name: "Clinical Protocols", score: selectedStaffObj.skills[1] ?? 0 },
-                   { name: "SOP Compliance", score: selectedStaffObj.skills[2] ?? 0 },
-                   { name: "Data Security", score: selectedStaffObj.skills[3] ?? 0 },
-                 ] : GAPS_DATA;
-                 const weaknesses = [...data].sort((a,b) => a.score - b.score).slice(0, 2); // get lowest 2
-                 return weaknesses.map((item, i) => (
-                   <div key={i} className="flex flex-col gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50">
-                     <div className="flex justify-between items-center">
-                       <span className="text-[13px] font-bold text-amber-900">{item.name}</span>
-                       <span className={`text-[13px] font-bold px-2 py-0.5 rounded shadow-sm border ${item.score < 65 ? 'bg-red-100 text-red-700 border-red-200' : 'bg-white text-amber-600 border-amber-200'}`}>
-                         {item.score}%
-                       </span>
-                     </div>
-                     <div className="w-full bg-amber-200/50 rounded-full h-1.5 overflow-hidden">
-                       <div className={`h-1.5 rounded-full ${item.score < 65 ? 'bg-red-500' : 'bg-amber-500'}`} style={{ width: `${item.score}%` }}></div>
-                     </div>
-                   </div>
-                 ));
-               })()}
-             </div>
-             <p className="text-[11px] text-slate-600 mt-4 font-medium">
-               Target Benchmark: <span className="font-bold text-red-500">75%</span>
-             </p>
-           </div>
+           <ul className="space-y-3">
+             {selectedStaffObj ? (
+                MOCK_INSIGHTS.person.critical.map((item, i) => (
+                  <li key={i} className="flex gap-3 text-[14px] text-[#991b1b] font-medium leading-relaxed">
+                    <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ef4444]" />
+                    <span>{item.text}</span>
+                  </li>
+                ))
+             ) : (
+                MOCK_INSIGHTS.all.critical.map((item, i) => (
+                  <li key={i} className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 text-[14px] text-[#991b1b] font-medium leading-relaxed group">
+                    <div className="flex gap-3">
+                      <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ef4444]" />
+                      <span>{item.text}</span>
+                    </div>
+                    <div className="shrink-0 flex flex-wrap items-center gap-2 opacity-100 sm:opacity-50 sm:group-hover:opacity-100 transition-opacity ml-4 sm:ml-0">
+                      <span className="text-[11px] bg-white border border-[#fecaca] px-2 py-0.5 rounded-full text-[#b91c1c] font-bold">{item.count} occurrences</span>
+                      <span className="text-[11px] bg-[#fef2f2] border border-[#fecaca] px-2 py-0.5 rounded-full text-[#991b1b] font-bold">{item.percentage} impact</span>
+                    </div>
+                  </li>
+                ))
+             )}
+           </ul>
+         </div>
+
+         <div>
+           <h4 className="text-[12px] font-bold uppercase tracking-widest text-slate-500 mb-4 px-1">Behavioral Observations</h4>
+           <ul className="space-y-3 px-1">
+             {(selectedStaffObj ? MOCK_INSIGHTS.person.behavioral : MOCK_INSIGHTS.all.behavioral).map((obs, i) => (
+               <li key={i} className="flex gap-3 text-[14px] text-slate-700 font-medium leading-relaxed">
+                  <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
+                  <span>{obs}</span>
+               </li>
+             ))}
+           </ul>
          </div>
       </div>
 

@@ -62,14 +62,19 @@ export const createUserSchema = z.object({
   role: RoleEnum.default('STAFF'),
   
   scenario: z
+    .array(z.string())
+    .optional()
+    .default([]),
+    
+    difficultyLevel: z
     .string()
-    .max(100, 'Scenario must be less than 100 characters')
+    .max(50, 'Difficulty Level must be less than 50 characters')
     .optional()
     .or(z.literal('')),
     
-  difficultyLevel: z
+  batchId: z
     .string()
-    .max(50, 'Difficulty Level must be less than 50 characters')
+    .max(50)
     .optional()
     .or(z.literal('')),
 });
@@ -112,7 +117,8 @@ export function transformUserInput(data: CreateUserInput) {
     department: data.department || null,
     unit: data.unit || null,
     role: data.role,
-    scenario: data.scenario || null,
+    scenario: data.scenario || [],
     difficultyLevel: data.difficultyLevel || null,
+    batchId: data.batchId || null,
   };
 }

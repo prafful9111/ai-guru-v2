@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { AdminHeader } from "@/components/admin/admin-header";
@@ -88,11 +88,15 @@ export default function AssessmentResults() {
              </div>
 
              {/* 2. Quick Insights (Detailed S/W/Retake) */}
-             <QuickInsights />
+             <Suspense fallback={<div className="h-32 flex items-center justify-center text-slate-400">Loading insights...</div>}>
+               <QuickInsights />
+             </Suspense>
 
              {/* 3. The Table (RAG Performance Matrix) */}
              <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-               <RagPerformanceMatrix />
+               <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Loading matrix...</div>}>
+                 <RagPerformanceMatrix />
+               </Suspense>
              </div>
              
              {/* 4. Last RAG Score Distribution */}
