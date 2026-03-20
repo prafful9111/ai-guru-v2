@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, Activity, Lock, Calendar, MessageSquare, ArrowRight, ShieldAlert, CheckCircle2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { User, Activity, Lock, Calendar, MessageSquare, ArrowRight, ShieldAlert, CheckCircle2, Navigation } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 const TIMELINE = [
@@ -14,38 +14,39 @@ const TIMELINE = [
 ];
 
 export function EmployeeJourneyTab() {
-  const [staff, setStaff] = useState("s-jenkins");
+  const searchParams = useSearchParams();
+  const rawStaff = searchParams.get("staff");
+  const staffParam = rawStaff && rawStaff !== "all-staff" ? rawStaff : (!rawStaff ? "EMP-09231" : null);
+  
+  // Minimal manual map based on the existing Matrix data IDs
+  const STAFF_DETAILS: Record<string, {name: string, initials: string, role: string, dept: string}> = {
+    "EMP-04821": { name: "Priya Sharma", initials: "PS", role: "Senior ICU Nurse", dept: "ICU Wing" },
+    "EMP-09231": { name: "Michael Chang", initials: "MC", role: "Pediatric Attending", dept: "Pediatrics" },
+    "EMP-05512": { name: "Alisha Davis", initials: "AD", role: "ER Technician", dept: "Emergency (ER)" },
+    "EMP-01124": { name: "Robert Jones", initials: "RJ", role: "Emergency RN", dept: "Emergency (ER)" },
+    "EMP-03882": { name: "Lisa Smith", initials: "LS", role: "Admin Staff", dept: "Front Desk" },
+    "EMP-06771": { name: "Tom Kumar", initials: "TK", role: "Nurse Grade I", dept: "Emergency (ER)" },
+  };
+
+  const isSpecificStaff = !!staffParam;
+  const user = isSpecificStaff ? STAFF_DETAILS[staffParam] || { name: "Sarah Jenkins", initials: "SJ", role: "Nurse Grade II", dept: "Emergency Dept" } : null;
+
+  if (!isSpecificStaff || !user) {
+    return (
+      <div className="bg-slate-50 border border-slate-200 border-dashed rounded-lg p-10 flex flex-col items-center justify-center text-center space-y-3 min-h-[400px]">
+        <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center border border-slate-200 shadow-sm text-slate-400">
+          <Navigation className="h-6 w-6" />
+        </div>
+        <div>
+          <h3 className="text-[15px] font-bold text-slate-800">No Specific Staff Selected</h3>
+          <p className="text-[13px] text-slate-500 max-w-sm mx-auto mt-1">Please select an individual staff member from the Global Filters above to view their 360° employee journey.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      
-      {/* Staff Selector */}
-      <div className="bg-white p-4 border border-slate-200 rounded-lg shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
-         <div className="flex items-center gap-3">
-           <div className="h-10 w-10 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-sm">
-             SJ
-           </div>
-           <div>
-             <h2 className="text-sm font-bold text-slate-900">Sarah Jenkins</h2>
-             <p className="text-xs text-slate-500">Nurse Grade II • Emergency Dept</p>
-           </div>
-         </div>
-         <div className="flex gap-3">
-           <Select value={staff} onValueChange={setStaff}>
-             <SelectTrigger className="h-9 w-[200px] text-sm">
-               <SelectValue placeholder="Select Staff Member" />
-             </SelectTrigger>
-             <SelectContent>
-               <SelectItem value="s-jenkins">Sarah Jenkins (ER)</SelectItem>
-               <SelectItem value="m-chang">Michael Chang (ICU)</SelectItem>
-               <SelectItem value="a-davis">Alisha Davis (Radiology)</SelectItem>
-             </SelectContent>
-           </Select>
-           <Button variant="outline" className="h-9 text-slate-600 bg-white shadow-sm hover:bg-slate-50">
-             Export Profile
-           </Button>
-         </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Staff Info & Context */}
@@ -57,18 +58,18 @@ export function EmployeeJourneyTab() {
               </div>
               <div className="p-6 space-y-4">
                  <div className="flex items-center gap-4">
-                   <div className="h-16 w-16 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-2xl shadow-inner">
-                     SJ
+                   <div className="h-16 w-16 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-2xl shadow-inner uppercase">
+                     {user.initials}
                    </div>
                    <div>
-                     <h2 className="text-lg font-semibold text-slate-900">Sarah Jenkins</h2>
-                     <p className="text-[13px] text-slate-500 font-medium">Nurse Grade II</p>
+                     <h2 className="text-lg font-semibold text-slate-900">{user.name}</h2>
+                     <p className="text-[13px] text-slate-500 font-medium">{user.role}</p>
                    </div>
                  </div>
                  <div className="pt-4 border-t border-slate-100 space-y-3">
                    <div className="flex justify-between text-[13px]">
                      <span className="text-slate-500">Department</span>
-                     <span className="font-medium text-slate-800">Emergency Dept (ER)</span>
+                     <span className="font-medium text-slate-800">{user.dept}</span>
                    </div>
                    <div className="flex justify-between text-[13px]">
                      <span className="text-slate-500">Date Joined</span>
@@ -121,7 +122,7 @@ export function EmployeeJourneyTab() {
           <div className="lg:col-span-2 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden h-full flex flex-col">
             <div className="px-5 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
                <Activity className="h-4 w-4 text-slate-500" />
-               <h3 className="font-semibold text-slate-800 text-[14px]">Comprehensive Information Journey</h3>
+               <h3 className="font-semibold text-slate-800 text-[14px]">Staff Action History & Journey</h3>
             </div>
             <div className="p-6 flex-1 bg-slate-50/30">
                <div className="relative pl-4 sm:pl-8 space-y-6">

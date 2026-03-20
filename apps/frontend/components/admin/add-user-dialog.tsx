@@ -18,6 +18,13 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -40,13 +47,14 @@ export function AddUserDialog({ trigger }: AddUserDialogProps) {
     defaultValues: {
       name: "",
       email: "",
-      password: "",
       phoneNumber: "",
       staffId: "",
       city: "",
       department: "",
       unit: "",
       role: "STAFF",
+      scenario: "",
+      difficultyLevel: "",
     },
   });
 
@@ -110,7 +118,10 @@ export function AddUserDialog({ trigger }: AddUserDialogProps) {
               </div>
             )}
 
-            {/* Basic Information */}
+          <div className="space-y-6">
+            <div className="border-b border-gray-100 pb-2">
+              <h3 className="text-sm font-medium text-slate-800">Personal Information</h3>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <FormField
                 control={form.control}
@@ -143,44 +154,6 @@ export function AddUserDialog({ trigger }: AddUserDialogProps) {
                   </FormItem>
                 )}
               />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password *</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Enter password"
-                          {...field}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          className="absolute right-1 top-1/2 -translate-y-1/2"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    {!form.formState.errors.password && (
-                      <FormDescription>Minimum 6 characters</FormDescription>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
@@ -191,43 +164,24 @@ export function AddUserDialog({ trigger }: AddUserDialogProps) {
                     <FormControl>
                       <Input placeholder="+91 9876543210" {...field} />
                     </FormControl>
-                    {/* <FormDescription className="invisible">
-                      Placeholder
-                    </FormDescription> */}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            {/* Staff Information */}
-            <FormField
-              control={form.control}
-              name="staffId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Staff ID</FormLabel>
-                  <FormControl>
-                    <Input placeholder="EMP001" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Unique identifier for the staff member
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Location Information */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border-b border-gray-100 pb-2 pt-2">
+              <h3 className="text-sm font-medium text-slate-800">Work & Training Details</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <FormField
                 control={form.control}
-                name="city"
+                name="staffId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>City</FormLabel>
+                    <FormLabel>Staff ID</FormLabel>
                     <FormControl>
-                      <Input placeholder="Mumbai" {...field} />
+                      <Input placeholder="EMP001" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -254,14 +208,73 @@ export function AddUserDialog({ trigger }: AddUserDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unit</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ICU" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a unit" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="ICU">ICU</SelectItem>
+                        <SelectItem value="OPD">OPD</SelectItem>
+                        <SelectItem value="Surgery">Surgery</SelectItem>
+                        <SelectItem value="Emergency">Emergency</SelectItem>
+                        <SelectItem value="General Ward">General Ward</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="scenario"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Scenario</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select scenario" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Financial Counseling">Financial Counseling</SelectItem>
+                        <SelectItem value="Patient Onboarding">Patient Onboarding</SelectItem>
+                        <SelectItem value="Discharge Process">Discharge Process</SelectItem>
+                        <SelectItem value="Emergency Triage">Emergency Triage</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="difficultyLevel"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Difficulty Level</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select level" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Beginner">Beginner</SelectItem>
+                        <SelectItem value="Intermediate">Intermediate</SelectItem>
+                        <SelectItem value="Advanced">Advanced</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+          </div>
 
             {/* Form Actions */}
             <div className="flex justify-end gap-3 pt-2">

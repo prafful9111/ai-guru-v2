@@ -41,7 +41,7 @@ export default function StaffAnalysisPage() {
               </TabsTrigger>
               <TabsTrigger value="employee-journey" className="flex items-center gap-2">
                  <Users className="h-4 w-4" />
-                 <span className="hidden sm:inline">Employee Journey (360 View)</span>
+                 <span className="hidden sm:inline">Staff Journey (360 View)</span>
               </TabsTrigger>
             </TabsList>
             

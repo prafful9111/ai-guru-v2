@@ -5,6 +5,7 @@ import {
   CheckCircle, Clock, AlertTriangle, Globe, MessageSquare, Bell, 
   ChevronRight, User, Send, FileText, Search, Filter
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -21,9 +22,9 @@ const STAFF_DATA = [
     assigned: 4,
     overdue: 1,
     scenarios: [
-      { id: 1, name: "Emergency Admission SOP", status: "completed", score: 92, date: "Mar 14, 2026", language: "English" },
-      { id: 2, name: "Angry Patient De-escalation", status: "in-progress", elapsed: "18 mins", language: "Hindi", voiceActive: true },
-      { id: 3, name: "Infection Control Protocols", status: "overdue", daysOverdue: 10, language: "Hindi" },
+      { id: 1, name: "Emergency Admission SOP", status: "completed", score: 92, date: "Mar 14, 2026", language: "English", difficulty: "Advanced", unit: "ICU Triage" },
+      { id: 2, name: "Angry Patient De-escalation", status: "in-progress", elapsed: "18 mins", language: "Hindi", voiceActive: true, difficulty: "Moderate", unit: "General Wards" },
+      { id: 3, name: "Infection Control Protocols", status: "overdue", daysOverdue: 10, language: "Hindi", difficulty: "Mandatory", unit: "All Staff" },
     ],
     timeline: [
       { date: "Mar 19, 2026 · 09:12", event: `System escalated "Infection Control" to Unit Manager`, type: "red" },
@@ -48,8 +49,8 @@ const STAFF_DATA = [
     assigned: 5,
     overdue: 0,
     scenarios: [
-      { id: 4, name: "Pediatric Advanced Life Support", status: "completed", score: 96, date: "Mar 10, 2026", language: "English" },
-      { id: 5, name: "Newborn Screening Protocol", status: "completed", score: 92, date: "Mar 05, 2026", language: "English" },
+      { id: 4, name: "Pediatric Advanced Life Support", status: "completed", score: 96, date: "Mar 10, 2026", language: "English", difficulty: "Expert", unit: "NICU/PICU" },
+      { id: 5, name: "Newborn Screening Protocol", status: "completed", score: 92, date: "Mar 05, 2026", language: "English", difficulty: "Advanced", unit: "Pediatrics" },
     ],
     timeline: [
       { date: "Mar 10, 2026 · 11:45", event: `Completed "PALS Certification" with High Distinction`, type: "green" },
@@ -71,8 +72,8 @@ const STAFF_DATA = [
     assigned: 3,
     overdue: 2,
     scenarios: [
-      { id: 6, name: "Trauma Room Hygiene", status: "overdue", daysOverdue: 5, language: "English" },
-      { id: 7, name: "Gurney Maintenance", status: "overdue", daysOverdue: 12, language: "English" },
+      { id: 6, name: "Trauma Room Hygiene", status: "overdue", daysOverdue: 5, language: "English", difficulty: "Mandatory", unit: "Emergency" },
+      { id: 7, name: "Gurney Maintenance", status: "overdue", daysOverdue: 12, language: "English", difficulty: "Basic", unit: "Logistics" },
     ],
     timeline: [
       { date: "Mar 18, 2026 · 16:20", event: "Final notice for overdue Trauma Hygiene assessment", type: "red" },
@@ -84,6 +85,20 @@ const STAFF_DATA = [
   }
 ];
 
+const PARAMETER_PERFORMANCE = {
+  totalScore: 52,
+  maxTotal: 60,
+  metrics: [
+    { name: "Closure", score: "N/A", max: "N/A", progress: 0, color: "bg-slate-200", text: "The audio cuts off while the staff is still in the process of negotiating the 2-minute wait and moving the patient to the lounge.", isError: true },
+    { name: "Empathy", score: 8, max: 10, progress: 80, color: "bg-emerald-500", text: "The staff validated the patient's frustration and apologized sincerely, though the initial response from the first staff member was slightly repetitive." },
+    { name: "Kindness", score: 9, max: 10, progress: 90, color: "bg-emerald-500", text: "The staff remained polite and respectful even when the patient was aggressive and dismissive of their explanations." },
+    { name: "How To Say No", score: 8, max: 10, progress: 80, color: "bg-emerald-500", text: "The staff handled the refund demand well by acknowledging the patient's right to it but prioritizing the medical consultation first, though a clearer explanation of refund policy could have been provided." },
+    { name: "Active Listening", score: 9, max: 10, progress: 90, color: "bg-emerald-500", text: "The staff accurately identified the specific doctor (Dr. Sharma) and addressed the patient's specific demand for a refund by redirecting to clinical priority." },
+    { name: "Situation Handling", score: 9, max: 10, progress: 90, color: "bg-emerald-500", text: "Excellent proactive problem-solving by suggesting the OT lounge for the consultation to minimize further delay, effectively moving the patient out of the public waiting area." },
+    { name: "Communication Clarity", score: 9, max: 10, progress: 90, color: "bg-emerald-500", text: "The second staff member followed the mandatory greeting protocol ('Namaste' and name introduction). Language was clear and professional throughout." },
+  ]
+};
+
 function nodeStyle(type: string) {
   if (type === "red")   return { dot: "bg-red-500 border-red-300", line: "border-red-200", text: "text-red-700" };
   if (type === "green") return { dot: "bg-emerald-500 border-emerald-300", line: "border-emerald-200", text: "text-emerald-700" };
@@ -92,46 +107,21 @@ function nodeStyle(type: string) {
 }
 
 export function StaffProfileView() {
-  // Sort by performance and pick top one as default
-  const sortedStaff = useMemo(() => [...STAFF_DATA].sort((a, b) => b.overallScore - a.overallScore), []);
-  const [selectedId, setSelectedId] = useState(sortedStaff[0]?.id || "");
+  const searchParams = useSearchParams();
+  const staffParam = searchParams.get("staff");
 
-  const staff = useMemo(() => STAFF_DATA.find(s => s.id === selectedId) || STAFF_DATA[0], [selectedId]);
+  // Sort by performance and pick top one as default if no staff selected
+  const sortedStaff = useMemo(() => [...STAFF_DATA].sort((a, b) => b.overallScore - a.overallScore), []);
+  
+  const selectedId = staffParam || sortedStaff[0]?.id || "";
+  const staff = useMemo(() => STAFF_DATA.find(s => s.id === selectedId) || sortedStaff[0] || STAFF_DATA[0], [selectedId, sortedStaff]);
 
   if (!staff) return null; // Defensive check for TS
 
   return (
     <div className="space-y-5">
 
-      {/* STAFF SELECTOR / FILTER BAR */}
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2">
-           <div className="bg-slate-800 text-white p-1.5 rounded-md">
-             <Filter className="h-4 w-4" />
-           </div>
-           <div>
-             <h3 className="text-[14px] font-bold text-slate-800 leading-tight">Staff Insight Filter</h3>
-             <p className="text-[11px] text-slate-500">Select a team member to view their clinical journey.</p>
-           </div>
-        </div>
-        <div className="w-[300px]">
-          <Select value={selectedId} onValueChange={setSelectedId}>
-            <SelectTrigger className="h-10 bg-white border-slate-200 text-[13px] font-medium shadow-sm">
-              <SelectValue placeholder="Select staff member..." />
-            </SelectTrigger>
-            <SelectContent className="bg-white">
-              {STAFF_DATA.map(s => (
-                 <SelectItem key={s.id} value={s.id} className="text-[13px]">
-                   <div className="flex items-center gap-2">
-                     <span className="font-bold text-slate-800">{s.name}</span>
-                     <span className="text-slate-400 text-[11px]">— {s.overallScore}%</span>
-                   </div>
-                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* STAFF SELECTOR / FILTER BAR REMOVED */}
 
       {/* TOP: Staff Master Profile Banner */}
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-5 animate-in slide-in-from-top-2 duration-300">
@@ -185,11 +175,8 @@ export function StaffProfileView() {
         </div>
       </div>
 
-      {/* MAIN: Two-Column Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5 items-start">
-
-        {/* LEFT: Scenario Portfolio (65%) */}
-        <div className="xl:col-span-3 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      {/* FULL-WIDTH: Scenario Portfolio */}
+      <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
           <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-slate-500" />
@@ -201,9 +188,10 @@ export function StaffProfileView() {
           <div className="divide-y divide-slate-100">
             {staff.scenarios.map((s) => (
               <div key={s.id} className="p-4 hover:bg-slate-50/60 transition-colors">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <div className={`shrink-0 mt-0.5 w-8 h-8 rounded-full flex items-center justify-center ${
                       s.status === "completed"   ? "bg-emerald-50"  :
                       s.status === "in-progress" ? "bg-blue-50"     : "bg-red-50"
                     }`}>
@@ -212,9 +200,15 @@ export function StaffProfileView() {
                       {s.status === "overdue"     && <AlertTriangle className="h-4 w-4 text-red-600" />}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-slate-800 truncate">{s.name}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{s.language}</span>
+                      <p className="text-[14px] font-semibold text-slate-800 truncate">{s.name}</p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-1.5">
+                        <span className="inline-flex text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{s.language}</span>
+                        {"difficulty" in s && (
+                          <span className="text-[11px] text-indigo-600 font-medium bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">{s.difficulty}</span>
+                        )}
+                        {"unit" in s && (
+                          <span className="text-[11px] text-slate-600 font-medium">· {s.unit}</span>
+                        )}
                         {"date" in s && s.date && (
                           <span className="text-[11px] text-slate-500">· Completed {s.date}</span>
                         )}
@@ -228,23 +222,23 @@ export function StaffProfileView() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-2 shrink-0">
+                  <div className="flex flex-col sm:items-end gap-2 shrink-0">
                     {s.status === "completed" && (
                       <>
-                        <span className="text-[14px] font-bold text-emerald-700">{s.score}%</span>
+                        <span className="text-[15px] font-bold text-emerald-700">{s.score}% Match</span>
                         <button className="text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-0.5">
-                          View Transcript <ChevronRight className="h-3 w-3" />
+                          View Detailed Transcript <ChevronRight className="h-3 w-3" />
                         </button>
                       </>
                     )}
                     {s.status === "in-progress" && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-blue-50 border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" /> Voice Active
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold bg-blue-50 border border-blue-200 text-blue-700 px-2.5 py-1 rounded-full shadow-sm">
+                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" /> Voice Engine Active
                       </span>
                     )}
                     {s.status === "overdue" && (
-                      <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1.5 border-red-200 text-red-600 hover:bg-red-50">
-                        <Send className="h-3 w-3" /> Manual Nudge
+                      <Button size="sm" variant="outline" className="h-8 text-[11px] gap-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-semibold">
+                        <Send className="h-3.5 w-3.5" /> Send Manual Nudge
                       </Button>
                     )}
                   </div>
@@ -252,16 +246,53 @@ export function StaffProfileView() {
               </div>
             ))}
           </div>
+      </div>
+
+      {/* SIDE-BY-SIDE ANALYTICS: Parameter Performance & Action History */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+        
+        {/* LEFT: PARAMETER PERFORMANCE WIDGET */}
+        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col h-full">
+          <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
+             <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-slate-500" />
+                <h3 className="text-[14px] font-semibold text-slate-800 tracking-tight">Parameter Performance</h3>
+             </div>
+             <div className="text-[14px] font-bold text-emerald-600">
+               {PARAMETER_PERFORMANCE.totalScore} <span className="text-[11px] text-slate-400 font-medium">/ {PARAMETER_PERFORMANCE.maxTotal}</span>
+             </div>
+          </div>
+          
+          <div className="p-5 space-y-6 h-[400px] overflow-y-auto">
+             {PARAMETER_PERFORMANCE.metrics.map((metric, i) => (
+               <div key={i} className="flex flex-col space-y-2">
+                 <div className="flex items-center justify-between">
+                   <span className="text-[13px] font-bold text-slate-700">{metric.name}</span>
+                   <span className={`text-[13px] font-bold ${metric.isError ? 'text-red-600' : 'text-emerald-700'}`}>
+                     {metric.score} {metric.max !== "N/A" && <span className="text-[11px] text-slate-400 font-medium">/ {metric.max}</span>}
+                   </span>
+                 </div>
+                 
+                 <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                   <div className={`h-full rounded-full ${metric.color}`} style={{ width: `${metric.progress}%` }} />
+                 </div>
+                 
+                 <p className="text-[12px] text-slate-500 leading-relaxed font-medium">
+                   {metric.text}
+                 </p>
+               </div>
+             ))}
+          </div>
         </div>
 
-        {/* RIGHT: Timeline (35%) */}
-        <div className="xl:col-span-2 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex items-center gap-2">
+        {/* RIGHT: Timeline */}
+        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col h-full">
+          <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex items-center gap-2 shrink-0">
             <Clock className="h-4 w-4 text-slate-500" />
             <h3 className="text-[14px] font-semibold text-slate-800">Action History & Journey</h3>
           </div>
 
-          <div className="p-5">
+          <div className="p-5 flex-1 relative h-[400px] overflow-y-auto">
             <div className="relative">
               {staff.timeline.map((node, i) => {
                 const s = nodeStyle(node.type);

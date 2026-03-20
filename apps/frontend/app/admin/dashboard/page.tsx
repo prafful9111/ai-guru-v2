@@ -24,7 +24,7 @@ export default function AdminDashboard() {
     <AdminLayoutShell>
       <AdminHeader 
         handleLogout={handleLogout} 
-        title="Overview "
+        title="Assessment Status"
         description="Monitor completion, escalations, and staff performance."
       />
       

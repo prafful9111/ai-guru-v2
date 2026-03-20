@@ -1,5 +1,6 @@
-import React from "react";
-import { Search, Filter, SlidersHorizontal, Download } from "lucide-react";
+import React, { Suspense } from "react";
+import { Search, Filter, SlidersHorizontal, Download, User } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function CommandCenterHeader() {
+function CommandCenterHeaderInner() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const showStaffFilter = pathname === "/admin/staff-analysis" || pathname === "/admin/staff-profile";
+  
+  // Default to top performer
+  const currentStaff = searchParams.get("staff") || "EMP-09231";
+
+  const handleStaffChange = (val: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (val === "all-staff") {
+      params.delete("staff");
+    } else {
+      params.set("staff", val);
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   return (
     <div className="sticky top-[73px] z-20 flex flex-wrap items-center justify-between gap-3 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-3 mb-6 shadow-sm shadow-slate-100/50">
       <div className="flex items-center gap-2 text-[12px] font-semibold text-slate-500 mr-2 py-1">
@@ -19,6 +38,23 @@ export function CommandCenterHeader() {
       </div>
       
       <div className="flex flex-wrap items-center gap-2 ml-auto">
+         {showStaffFilter && (
+           <Select value={currentStaff} onValueChange={handleStaffChange}>
+             <SelectTrigger className="h-8 w-[130px] sm:w-[150px] border-slate-200 bg-white text-[12px] font-medium text-slate-700">
+               <div className="flex items-center gap-1.5">
+                 <User className="h-3.5 w-3.5 text-slate-400" />
+                 <SelectValue placeholder="Staff Member" />
+               </div>
+             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="all-staff">All Staff</SelectItem>
+               <SelectItem value="EMP-09231">Michael Chang</SelectItem>
+               <SelectItem value="EMP-04821">Priya Sharma</SelectItem>
+               <SelectItem value="EMP-05512">Alisha Davis</SelectItem>
+             </SelectContent>
+           </Select>
+         )}
+
          <Select defaultValue="all-dept">
           <SelectTrigger className="h-8 w-[110px] sm:w-[130px] border-slate-200 bg-white text-[12px] font-medium text-slate-700">
             <SelectValue placeholder="Department" />
@@ -78,5 +114,13 @@ export function CommandCenterHeader() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export function CommandCenterHeader() {
+  return (
+    <Suspense fallback={<div className="h-[65px] bg-white border-b" />}>
+      <CommandCenterHeaderInner />
+    </Suspense>
   );
 }

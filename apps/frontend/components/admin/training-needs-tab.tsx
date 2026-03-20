@@ -6,16 +6,17 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSearchParams } from "next/navigation";
 import { StaffProficiencySheet } from "@/components/admin/staff-proficiency-sheet";
 import { KpiCardUnified } from "./kpi-card-unified";
 
 const MATRIX_DATA = [
-  { id: "SJ", name: "Sarah Jenkins", role: "Nurse Grade II", dept: "Emergency (ER)", score: 77, rec: "De-escalation Module 2", skills: [65, 92, 45, 88] },
-  { id: "MC", name: "Michael Chang", role: "Attending", dept: "ICU Wing", score: 82, rec: "Advanced Protocols", skills: [72, 96, 60, 85] },
-  { id: "AD", name: "Alisha Davis", role: "Technician", dept: "Radiology", score: 74, rec: "Patient Empathy Basics", skills: [60, 95, 40, 80] },
-  { id: "RJ", name: "Robert Jones", role: "Pediatric RN", dept: "Pediatrics", score: 88, rec: "No Action Reqd.", skills: [94, 88, 82, 70] },
-  { id: "LS", name: "Lisa Smith", role: "Admin Staff", dept: "Front Desk", score: 70, rec: "Billing Escalations", skills: [82, 40, 55, 95] },
-  { id: "TK", name: "Tom Kumar", role: "Nurse Grade I", dept: "Emergency (ER)", score: 62, rec: "Mandatory Patient Safety", skills: [55, 70, 40, 80] },
+  { id: "EMP-04821", name: "Priya Sharma", role: "Senior ICU Nurse", dept: "ICU Wing", score: 85, rec: "Advanced Protocols", skills: [82, 90, 85, 88] },
+  { id: "EMP-09231", name: "Michael Chang", role: "Pediatric Attending", dept: "Pediatrics", score: 94, rec: "No Action Reqd.", skills: [94, 98, 92, 90] },
+  { id: "EMP-05512", name: "Alisha Davis", role: "ER Technician", dept: "Emergency (ER)", score: 68, rec: "SOP Compliance Module", skills: [60, 75, 55, 80] },
+  { id: "EMP-01124", name: "Robert Jones", role: "Emergency RN", dept: "Emergency (ER)", score: 77, rec: "De-escalation Module", skills: [65, 92, 45, 88] },
+  { id: "EMP-03882", name: "Lisa Smith", role: "Admin Staff", dept: "Front Desk", score: 70, rec: "Billing Escalations", skills: [82, 40, 55, 95] },
+  { id: "EMP-06771", name: "Tom Kumar", role: "Nurse Grade I", dept: "Emergency (ER)", score: 62, rec: "Mandatory Patient Safety", skills: [55, 70, 40, 80] },
 ];
 
 const SKILLS_LABELS = ["Patient Safety", "Clinical Protocols", "SOP Compliance", "Data Security"];
@@ -42,6 +43,13 @@ function getScoreBadge(score: number) {
 export function TrainingNeedsTab() {
   const [selectedRecord, setSelectedRecord] = useState<typeof MATRIX_DATA[0] | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  
+  const searchParams = useSearchParams();
+  const rawStaff = searchParams.get("staff");
+  const staffParam = rawStaff && rawStaff !== "all-staff" ? rawStaff : (!rawStaff ? "EMP-09231" : null);
+
+  const isSpecificStaff = !!staffParam;
+  const selectedStaffObj = isSpecificStaff ? MATRIX_DATA.find(m => m.id === staffParam) : null;
 
   function handleRowClick(row: typeof MATRIX_DATA[0]) {
     setSelectedRecord(row);
@@ -98,50 +106,85 @@ export function TrainingNeedsTab() {
 
       </div>
 
-      {/* SECTION B: Competency Gaps Analysis */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-5">
-         <div className="mb-4 flex items-center justify-between">
-           <h3 className="text-[14px] font-semibold text-slate-800">Key Competency Gaps</h3>
-           <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
-              <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#475b75] rounded-sm"></div> Average Score</span>
-              <span className="flex items-center gap-1.5"><div className="w-6 h-0 border-t-2 border-dashed border-red-400"></div> Target (75%)</span>
-           </div>
+      {/* SECTION B: Dynamic Strengths & Competency Gaps Analysis */}
+      <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-0 overflow-hidden">
+         <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+           <h3 className="text-[15px] font-semibold text-slate-800">
+             {selectedStaffObj ? `Proficiency Insights: ${selectedStaffObj.name}` : 'Organization-Wide Competency Overview'}
+           </h3>
          </div>
          
-         <div className="relative h-44 w-full flex flex-col justify-between">
-            {/* Threshold Line */}
-            <div className="absolute top-0 bottom-0 left-[75%] border-l-2 border-dashed border-red-400 z-0 pointer-events-none"></div>
-            
-            {GAPS_DATA.map((item, i) => (
-               <div key={i} className="flex items-center relative z-10 w-full mb-3 last:mb-0">
-                  <div className="w-32 shrink-0 text-[12px] font-medium text-slate-700 truncate pr-3 text-right">
-                    {item.name}
-                  </div>
-                  <div className="flex-1 bg-slate-100 h-6 rounded overflow-hidden flex items-center">
-                    <div 
-                      className={`h-full flex items-center justify-end pr-2 text-[10px] font-semibold text-white transition-all 
-                        ${item.score < 75 ? 'bg-[#cbd5e1] flex-row-reverse pl-2 text-slate-600' : 'bg-[#475b75]'}`}
-                      style={{ width: `${item.score}%` }}
-                    >
-                      {item.score}%
-                    </div>
-                  </div>
-                  <div className="w-10"></div> {/* Spacer to keep alignment clear of threshold if needed */}
-               </div>
-            ))}
-            
-            {/* X-axis labels */}
-            <div className="flex ml-32 mt-2 pt-2 border-t border-slate-200 relative">
-               <div className="absolute top-2 left-[75%] -translate-x-1/2 text-[10px] font-bold text-red-500">75%</div>
-               <div className="w-full flex justify-between text-[10px] text-slate-400 font-medium">
-                 <span>0%</span>
-                 <span>25%</span>
-                 <span>50%</span>
-                 <span>100%</span>
-               </div>
-            </div>
+         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+           
+           {/* Top Strengths */}
+           <div className="p-6 bg-white">
+             <div className="flex items-center gap-2 mb-4 text-emerald-600">
+               <TrendingUp className="h-5 w-5" />
+               <h4 className="text-[14px] font-bold">Top Strengths</h4>
+             </div>
+             
+             <div className="space-y-4">
+               {(() => {
+                 const data: { name: string; score: number }[] = selectedStaffObj ? [
+                   { name: "Patient Safety", score: selectedStaffObj.skills[0] ?? 0 },
+                   { name: "Clinical Protocols", score: selectedStaffObj.skills[1] ?? 0 },
+                   { name: "SOP Compliance", score: selectedStaffObj.skills[2] ?? 0 },
+                   { name: "Data Security", score: selectedStaffObj.skills[3] ?? 0 },
+                 ] : GAPS_DATA;
+                 const strengths = [...data].sort((a,b) => b.score - a.score).slice(0, 2);
+                 return strengths.map((item, i) => (
+                   <div key={i} className="flex justify-between items-center p-3 rounded-lg border border-emerald-100 bg-emerald-50/30">
+                     <span className="text-[13px] font-semibold text-emerald-800">{item.name}</span>
+                     <span className="text-[14px] font-bold text-emerald-600 bg-white px-2 py-0.5 rounded shadow-sm border border-emerald-100">{item.score}%</span>
+                   </div>
+                 ));
+               })()}
+             </div>
+             <p className="text-[11px] text-slate-500 mt-4 leading-relaxed">
+               {selectedStaffObj 
+                 ? `${selectedStaffObj.name} demonstrates excellent capabilities in these areas, consistently performing above the 85% benchmark.`
+                 : "Across all departments, these protocols represent our strongest compliance areas."}
+             </p>
+           </div>
+           
+           {/* Key Shortcomings / Areas for Improvement */}
+           <div className="p-6 bg-white">
+             <div className="flex items-center gap-2 mb-4 text-amber-600">
+               <ShieldAlert className="h-5 w-5" />
+               <h4 className="text-[14px] font-bold">Priority Areas for Improvement</h4>
+             </div>
+             
+             <div className="space-y-4">
+               {(() => {
+                 const data: { name: string; score: number }[] = selectedStaffObj ? [
+                   { name: "Patient Safety", score: selectedStaffObj.skills[0] ?? 0 },
+                   { name: "Clinical Protocols", score: selectedStaffObj.skills[1] ?? 0 },
+                   { name: "SOP Compliance", score: selectedStaffObj.skills[2] ?? 0 },
+                   { name: "Data Security", score: selectedStaffObj.skills[3] ?? 0 },
+                 ] : GAPS_DATA;
+                 const weaknesses = [...data].sort((a,b) => a.score - b.score).slice(0, 2); // get lowest 2
+                 return weaknesses.map((item, i) => (
+                   <div key={i} className="flex flex-col gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50">
+                     <div className="flex justify-between items-center">
+                       <span className="text-[13px] font-bold text-amber-900">{item.name}</span>
+                       <span className={`text-[13px] font-bold px-2 py-0.5 rounded shadow-sm border ${item.score < 65 ? 'bg-red-100 text-red-700 border-red-200' : 'bg-white text-amber-600 border-amber-200'}`}>
+                         {item.score}%
+                       </span>
+                     </div>
+                     <div className="w-full bg-amber-200/50 rounded-full h-1.5 overflow-hidden">
+                       <div className={`h-1.5 rounded-full ${item.score < 65 ? 'bg-red-500' : 'bg-amber-500'}`} style={{ width: `${item.score}%` }}></div>
+                     </div>
+                   </div>
+                 ));
+               })()}
+             </div>
+             <p className="text-[11px] text-slate-600 mt-4 font-medium">
+               Target Benchmark: <span className="font-bold text-red-500">75%</span>
+             </p>
+           </div>
          </div>
       </div>
+
 
       {/* SECTION C: Detailed Staff Training Matrix */}
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col">

@@ -18,7 +18,11 @@ export default function UsersPage() {
 
   return (
     <AdminLayoutShell>
-      <AdminHeader handleLogout={handleLogout} />
+      <AdminHeader 
+        handleLogout={handleLogout} 
+        title="Staff & Training Management"
+        description="Transition from bulk data to individualized tracking and assignments."
+      />
       <main className="max-w-7xl w-full mx-auto p-4 md:p-8 pt-4">
          <StaffManagementDashboard />
       </main>

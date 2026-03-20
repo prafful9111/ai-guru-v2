@@ -63,14 +63,6 @@ export const AdminHeader = ({ handleLogout, title, description, icon, filters }:
             </button>
           )}
           
-          {!isUsersPage && (
-            <Link
-              href={"/admin/users"}
-              className="border w-fit px-4 py-2 rounded-lg hover:cursor-pointer hover:bg-muted font-medium text-slate-600 hover:text-slate-800 transition-colors text-xs"
-            >
-              View / Create Users
-            </Link>
-          )}
           <div className="flex items-center gap-2 md:gap-3 px-2 md:px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
             <div className="w-7 h-7 md:w-8 md:h-8 rounded bg-slate-800 text-white flex items-center justify-center font-bold text-[10px] md:text-xs shadow-sm">
               AD

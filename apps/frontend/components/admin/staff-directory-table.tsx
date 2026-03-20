@@ -43,6 +43,51 @@ import {
 import { format } from "date-fns";
 import { EditStaffDialog } from "./edit-staff-dialog";
 
+const SAMPLE_USERS: any[] = [
+  {
+    id: "1",
+    name: "Dr. Sarah Chen",
+    email: "sarah.chen@hospital.org",
+    phoneNumber: "+91 9876543210",
+    staffId: "EMP042",
+    city: "Mumbai",
+    department: "Cardiology",
+    unit: "ICU",
+    role: "STAFF",
+    lastTrainingDate: "2023-10-15T09:00:00Z",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    name: "Michael Chang",
+    email: "m.chang@hospital.org",
+    phoneNumber: "+91 9876543211",
+    staffId: "EMP089",
+    city: "Delhi",
+    department: "Neurology",
+    unit: "OPD",
+    role: "STAFF",
+    lastTrainingDate: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "3",
+    name: "Priya Sharma",
+    email: "p.sharma@hospital.org",
+    phoneNumber: "+91 9876543212",
+    staffId: "EMP112",
+    city: "Bangalore",
+    department: "Emergency",
+    unit: "ER",
+    role: "STAFF",
+    lastTrainingDate: "2023-11-01T14:30:00Z",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+];
+
 export function StaffDirectoryTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -66,7 +111,7 @@ export function StaffDirectoryTable() {
   });
 
   const filteredUsers = useMemo(() => {
-    let result = users || [];
+    let result = SAMPLE_USERS;
     if (departmentFilter !== "ALL") {
       result = result.filter(u => u.department === departmentFilter);
     }
@@ -129,7 +174,7 @@ export function StaffDirectoryTable() {
         accessorKey: "lastTrainingDate",
         header: "Last Training",
         cell: ({ row }) => {
-          const date = row.original.lastTrainingDate ? new Date(row.original.lastTrainingDate) : null;
+          const date = (row.original as any).lastTrainingDate ? new Date((row.original as any).lastTrainingDate) : null;
           return (
             <div className="text-sm">
               {date ? format(date, "MMM d, yyyy") : <span className="text-gray-400 italic">Never</span>}
@@ -142,7 +187,7 @@ export function StaffDirectoryTable() {
         header: "Status",
         cell: ({ row }) => {
           // Status Logic: if training date is recent, "Ready for Assessment"
-          const date = row.original.lastTrainingDate ? new Date(row.original.lastTrainingDate) : null;
+          const date = (row.original as any).lastTrainingDate ? new Date((row.original as any).lastTrainingDate) : null;
           const isReady = date !== null; // Mock logic
           return isReady ? (
             <Badge variant="default" className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-200">
@@ -305,7 +350,7 @@ export function StaffDirectoryTable() {
       {/* Pagination */}
       <div className="flex items-center justify-between px-2 text-sm text-gray-500">
         <div>
-          Showing {filteredUsers.length} of {pagination?.totalUsers || 0} users
+          Showing {filteredUsers.length} of {SAMPLE_USERS.length} users
         </div>
         <div className="flex items-center gap-4">
            <div className="flex items-center gap-1">

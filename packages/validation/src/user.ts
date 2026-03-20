@@ -27,7 +27,8 @@ export const createUserSchema = z.object({
     .string()
     .min(1, 'Password is required')
     .min(6, 'Password must be at least 6 characters')
-    .max(100, 'Password must be less than 100 characters'),
+    .max(100, 'Password must be less than 100 characters')
+    .optional(),
   
   phoneNumber: z
     .string()
@@ -59,6 +60,18 @@ export const createUserSchema = z.object({
     .or(z.literal('')),
   
   role: RoleEnum.default('STAFF'),
+  
+  scenario: z
+    .string()
+    .max(100, 'Scenario must be less than 100 characters')
+    .optional()
+    .or(z.literal('')),
+    
+  difficultyLevel: z
+    .string()
+    .max(50, 'Difficulty Level must be less than 50 characters')
+    .optional()
+    .or(z.literal('')),
 });
 
 /**
@@ -99,5 +112,7 @@ export function transformUserInput(data: CreateUserInput) {
     department: data.department || null,
     unit: data.unit || null,
     role: data.role,
+    scenario: data.scenario || null,
+    difficultyLevel: data.difficultyLevel || null,
   };
 }

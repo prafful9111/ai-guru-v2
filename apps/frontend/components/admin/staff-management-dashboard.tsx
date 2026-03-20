@@ -14,14 +14,6 @@ export function StaffManagementDashboard() {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Staff & Training Management</h1>
-          <p className="text-sm text-gray-500">
-            Transition from bulk data to individualized tracking and assignments.
-          </p>
-        </div>
-      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full lg:max-w-[800px] grid-cols-2 md:grid-cols-4">
