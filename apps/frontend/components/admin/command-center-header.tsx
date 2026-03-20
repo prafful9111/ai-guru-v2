@@ -20,6 +20,15 @@ const STAFF_SCENARIOS: Record<string, string[]> = {
   "EMP-06771": ["delayed-doctor"], // Tom
 };
 
+const MOCK_STAFF_LIST = [
+  { id: "EMP-09231", name: "Michael Chang", batches: ["BATCH-2026-03-20"] },
+  { id: "EMP-04821", name: "Priya Sharma", batches: ["BATCH-2026-03-20", "BATCH-2026-03-19"] },
+  { id: "EMP-05512", name: "Alisha Davis", batches: ["BATCH-2026-03-19"] },
+  { id: "EMP-01124", name: "Robert Jones", batches: ["BATCH-2026-03-20"] },
+  { id: "EMP-03882", name: "Lisa Smith", batches: ["BATCH-2026-03-20"] },
+  { id: "EMP-06771", name: "Tom Kumar", batches: ["BATCH-2026-03-19"] },
+];
+
 const ALL_SCENARIOS = [
   { value: "delayed-doctor", label: "Delayed doctor appointment" },
   { value: "outside-food", label: "Outside food request" },
@@ -73,12 +82,32 @@ function CommandCenterHeaderInner() {
       }
     }
     
+    // Auto-reset staff if switching batch logic conflicts
+    if (key === "batch") {
+       if (val === "all-batches") {
+          params.delete("staff");
+       } else if (val !== "individual" && val !== "all-batches") {
+          const staffInNewBatch = MOCK_STAFF_LIST.filter(s => s.batches.includes(val) || val.startsWith("batch"));
+          if (!staffInNewBatch.find(s => s.id === params.get("staff"))) {
+             params.delete("staff");
+          }
+       }
+    }
+    
     router.push(`${pathname}?${params.toString()}`);
   };
 
   const availableScenarios = currentStaff === "all-staff" 
     ? ALL_SCENARIOS 
     : ALL_SCENARIOS.filter(s => STAFF_SCENARIOS[currentStaff]?.includes(s.value));
+    
+  let availableStaff = MOCK_STAFF_LIST;
+  if (currentBatch === "all-batches") {
+     availableStaff = [];
+  } else if (currentBatch !== "individual") {
+     // Filter by batch inclusion (or just show some for dynamically generated batches)
+     availableStaff = MOCK_STAFF_LIST.filter(s => s.batches.includes(currentBatch) || !currentBatch.startsWith("BATCH"));
+  }
 
   return (
     <div className="sticky top-[73px] z-20 flex flex-wrap items-center justify-between gap-3 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-3 mb-6 shadow-sm shadow-slate-100/50">
@@ -88,21 +117,34 @@ function CommandCenterHeaderInner() {
       </div>
       
       <div className="flex flex-wrap items-center gap-2 ml-auto">
-         <Select value={currentStaff} onValueChange={(v) => handleParamChange("staff", v, "all-staff")}>
+         {/* Training Group Filter (Moved before Staff logically) */}
+         <Select value={currentBatch} onValueChange={(v) => handleParamChange("batch", v, "all-batches")}>
+           <SelectTrigger className="h-8 w-[120px] sm:w-[150px] border-slate-200 bg-white text-[12px] font-medium text-slate-700">
+             <SelectValue placeholder="Training Group" />
+           </SelectTrigger>
+           <SelectContent>
+             <SelectItem value="all-batches">All Training Groups</SelectItem>
+             <SelectItem value="individual">Individual User Focus</SelectItem>
+             <SelectItem value="BATCH-2026-03-20">Group: 2026-03-20 (20 users)</SelectItem>
+             <SelectItem value="BATCH-2026-03-19">Group: 2026-03-19 (15 users)</SelectItem>
+             {dynamicBatches.map(b => (
+               <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+             ))}
+           </SelectContent>
+         </Select>
+
+         <Select value={currentStaff} onValueChange={(v) => handleParamChange("staff", v, "all-staff")} disabled={currentBatch === "all-batches"}>
              <SelectTrigger className="h-8 w-[130px] sm:w-[150px] border-slate-200 bg-white text-[12px] font-medium text-slate-700">
                <div className="flex items-center gap-1.5">
                  <User className="h-3.5 w-3.5 text-slate-400" />
-                 <SelectValue placeholder="Staff Member" />
+                 <SelectValue placeholder={currentBatch === "all-batches" ? "Select Group First" : "Staff Member"} />
                </div>
              </SelectTrigger>
              <SelectContent>
                <SelectItem value="all-staff">All Staff</SelectItem>
-               <SelectItem value="EMP-09231">Michael Chang</SelectItem>
-               <SelectItem value="EMP-04821">Priya Sharma</SelectItem>
-               <SelectItem value="EMP-05512">Alisha Davis</SelectItem>
-               <SelectItem value="EMP-01124">Robert Jones</SelectItem>
-               <SelectItem value="EMP-03882">Lisa Smith</SelectItem>
-               <SelectItem value="EMP-06771">Tom Kumar</SelectItem>
+               {availableStaff.map(staff => (
+                  <SelectItem key={staff.id} value={staff.id}>{staff.name}</SelectItem>
+               ))}
              </SelectContent>
            </Select>
 
@@ -142,22 +184,6 @@ function CommandCenterHeaderInner() {
             {currentStaff !== "all-staff" && availableScenarios.length === 0 && (
                <SelectItem value="none" disabled>No modules assigned</SelectItem>
             )}
-          </SelectContent>
-        </Select>
-
-        {/* Training Group Filter */}
-        <Select value={currentBatch} onValueChange={(v) => handleParamChange("batch", v, "all-batches")}>
-          <SelectTrigger className="h-8 w-[120px] sm:w-[150px] border-slate-200 bg-white text-[12px] font-medium text-slate-700">
-            <SelectValue placeholder="Training Group" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all-batches">All Training Groups</SelectItem>
-            <SelectItem value="individual">Individual User</SelectItem>
-            <SelectItem value="BATCH-2026-03-20" disabled>Group: 2026-03-20 (20 users)</SelectItem>
-            <SelectItem value="BATCH-2026-03-19" disabled>Group: 2026-03-19 (15 users)</SelectItem>
-            {dynamicBatches.map(b => (
-              <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-            ))}
           </SelectContent>
         </Select>
 

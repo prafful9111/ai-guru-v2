@@ -49,15 +49,15 @@ const ScenarioCell = ({ scenarios }: { scenarios: string[] }) => {
 };
 
 const MOCK_COHORT = [
-  { id: "EMP-09231", name: "Michael Chang", dept: "emergency", role: "ER Nurse", scenarios: ["Delayed doctor appointment", "Calming an anxious patient"], progress: 80, status: "In Progress", score: "92%" },
+  { id: "EMP-09231", name: "Michael Chang", dept: "emergency", role: "ER Nurse", scenarios: ["Delayed doctor appointment", "Calming an anxious patient"], progress: 80, status: "In Progress", score: "92%", batches: ["BATCH-2026-03-20"] },
   
-  { id: "EMP-04821", name: "Priya Sharma", dept: "cardiology", role: "Cardiologist", scenarios: ["Outside food request"], progress: 100, status: "Completed", score: "88%" },
+  { id: "EMP-04821", name: "Priya Sharma", dept: "cardiology", role: "Cardiologist", scenarios: ["Outside food request"], progress: 100, status: "Completed", score: "88%", batches: ["BATCH-2026-03-20", "BATCH-2026-03-19"] },
   
-  { id: "EMP-05512", name: "Alisha Davis", dept: "emergency", role: "Radiology Tech", scenarios: ["Angry patient overcharged", "Breaking a bad news", "Cold and late food"], progress: 33, status: "Overdue", score: "96%" },
+  { id: "EMP-05512", name: "Alisha Davis", dept: "emergency", role: "Radiology Tech", scenarios: ["Angry patient overcharged", "Breaking a bad news", "Cold and late food"], progress: 33, status: "Overdue", score: "96%", batches: ["BATCH-2026-03-19"] },
   
-  { id: "EMP-01124", name: "Robert Jones", dept: "icu", role: "Pediatrics", scenarios: ["Out of visiting hours"], progress: 40, status: "In Progress", score: "--" },
+  { id: "EMP-01124", name: "Robert Jones", dept: "icu", role: "Pediatrics", scenarios: ["Out of visiting hours"], progress: 40, status: "In Progress", score: "--", batches: ["BATCH-2026-03-20"] },
   
-  { id: "EMP-06771", name: "Tom Kumar", dept: "cardiology", role: "Surgical Tech", scenarios: ["Delayed doctor appointment"], progress: 100, status: "Completed", score: "74%" },
+  { id: "EMP-06771", name: "Tom Kumar", dept: "cardiology", role: "Surgical Tech", scenarios: ["Delayed doctor appointment"], progress: 100, status: "Completed", score: "74%", batches: ["BATCH-2026-03-19"] },
 ];
 
 interface Props {
@@ -79,10 +79,7 @@ export function CohortCompletionTracker({ filterBatch = "all-batches", filterSta
   } else if (filterDept !== "all-dept") {
       displayCohort = MOCK_COHORT.filter(s => s.dept === filterDept);
   } else if (filterBatch !== "all-batches") {
-    const num = filterBatch.length % 3;
-    if (num === 0) displayCohort = MOCK_COHORT.slice(0, 4);
-    else if (num === 1) displayCohort = MOCK_COHORT.slice(3, 7);
-    else displayCohort = MOCK_COHORT.slice(1, 6);
+      displayCohort = MOCK_COHORT.filter(s => s.batches.includes(filterBatch) || filterBatch.startsWith("batch"));
   }
 
   return (
