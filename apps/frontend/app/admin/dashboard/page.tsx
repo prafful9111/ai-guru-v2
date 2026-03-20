@@ -8,7 +8,8 @@ import { AdminLayoutShell } from "@/components/admin/admin-layout-shell";
 import { CommandCenterHeader } from "@/components/admin/command-center-header";
 import { StatusFunnel } from "@/components/admin/status-funnel";
 import { EscalationMatrix } from "@/components/admin/escalation-matrix";
-import { Layers, AlertTriangle } from "lucide-react";
+import { Layers, AlertTriangle, UsersRound } from "lucide-react";
+import { CohortTrackingView } from "@/components/admin/cohort-tracking-view";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminDashboard() {
@@ -24,7 +25,7 @@ export default function AdminDashboard() {
     <AdminLayoutShell>
       <AdminHeader 
         handleLogout={handleLogout} 
-        title="Assessment Status"
+        title="Overview"
         description="Monitor completion, escalations, and staff performance."
       />
       
@@ -37,10 +38,14 @@ export default function AdminDashboard() {
         
         <div className="px-4 md:px-8 space-y-8 animate-in fade-in duration-500">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full lg:max-w-[400px] grid-cols-2 mb-8">
+            <TabsList className="grid w-full lg:max-w-[600px] grid-cols-3 mb-8">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                  <Layers className="h-4 w-4" />
-                 <span className="hidden sm:inline">Overview & Status</span>
+                 <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="cohort" className="flex items-center gap-2">
+                 <UsersRound className="h-4 w-4 text-indigo-500" />
+                 <span className="hidden sm:inline">Training Status</span>
               </TabsTrigger>
               <TabsTrigger value="escalations" className="flex items-center gap-2">
                  <AlertTriangle className="h-4 w-4 text-rose-500" />
@@ -57,6 +62,12 @@ export default function AdminDashboard() {
             <TabsContent value="escalations" className="space-y-4 m-0">
                <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Loading escalations...</div>}>
                  <EscalationMatrix />
+               </Suspense>
+            </TabsContent>
+
+            <TabsContent value="cohort" className="space-y-4 m-0">
+               <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-400">Loading cohort tracking...</div>}>
+                 <CohortTrackingView />
                </Suspense>
             </TabsContent>
           </Tabs>

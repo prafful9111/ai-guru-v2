@@ -152,6 +152,7 @@ function CommandCenterHeaderInner() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all-batches">All Training Groups</SelectItem>
+            <SelectItem value="individual">Individual User</SelectItem>
             <SelectItem value="BATCH-2026-03-20" disabled>Group: 2026-03-20 (20 users)</SelectItem>
             <SelectItem value="BATCH-2026-03-19" disabled>Group: 2026-03-19 (15 users)</SelectItem>
             {dynamicBatches.map(b => (

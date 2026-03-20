@@ -38,14 +38,14 @@ interface StaffRow {
 
 // ── Mock Data ────────────────────────────────────────────────────────────────
 const DATA: StaffRow[] = [
-  { id: "1", staffId: "HOS-1041", name: "Dr. Ahmed Khan",   department: "Cardiology", unit: "Ward 4B",   dueDate: "Mar 16", daysOverdue: 2,  tier: "Nudge",    cc: "—" },
-  { id: "2", staffId: "HOS-2187", name: "Priya Nair",       department: "Radiology",  unit: "Imaging",   dueDate: "Mar 15", daysOverdue: 3,  tier: "Nudge",    cc: "—" },
-  { id: "3", staffId: "HOS-3302", name: "Sarah Jenkins",    department: "ICU",        unit: "ICU-2",     dueDate: "Mar 11", daysOverdue: 7,  tier: "Warning",  cc: "Unit Manager" },
-  { id: "4", staffId: "HOS-0954", name: "Tom Bradley",      department: "Pharmacy",   unit: "Dispensary",dueDate: "Mar 09", daysOverdue: 9,  tier: "Warning",  cc: "Unit Manager" },
-  { id: "5", staffId: "HOS-1775", name: "Maria Lopez",      department: "Emergency",  unit: "ER-High",   dueDate: "Mar 06", daysOverdue: 12, tier: "Urgent",   cc: "Dept. Head + Unit Mgr" },
-  { id: "6", staffId: "HOS-2239", name: "Aisha Malik",      department: "Oncology",   unit: "Chemo Bay", dueDate: "Mar 04", daysOverdue: 14, tier: "Urgent",   cc: "Dept. Head + Unit Mgr" },
-  { id: "7", staffId: "HOS-0088", name: "Dr. James Smith",  department: "Surgery",    unit: "OR-3",      dueDate: "Feb 28", daysOverdue: 18, tier: "Escalated",cc: "HR + Dept. Head + Admin" },
-  { id: "8", staffId: "HOS-3410", name: "Carlos Rivera",    department: "Pediatrics", unit: "PICU",      dueDate: "Feb 25", daysOverdue: 22, tier: "Escalated",cc: "HR + Dept. Head + Admin" },
+  { id: "1", staffId: "EMP-09231", name: "Michael Chang", department: "Emergency", unit: "ER-1", dueDate: "Mar 16", daysOverdue: 2,  tier: "Nudge",    cc: "—" },
+  { id: "2", staffId: "EMP-04821", name: "Priya Sharma", department: "Cardiology", unit: "Imaging", dueDate: "Mar 15", daysOverdue: 3,  tier: "Nudge",    cc: "—" },
+  { id: "3", staffId: "EMP-05512", name: "Alisha Davis", department: "Emergency", unit: "ER-2", dueDate: "Mar 11", daysOverdue: 7,  tier: "Warning",  cc: "Unit Manager" },
+  { id: "4", staffId: "EMP-01124", name: "Robert Jones", department: "ICU", unit: "ICU-A", dueDate: "Mar 09", daysOverdue: 9,  tier: "Warning",  cc: "Unit Manager" },
+  { id: "5", staffId: "EMP-03882", name: "Lisa Smith", department: "Cardiology", unit: "Ward 4", dueDate: "Mar 06", daysOverdue: 12, tier: "Urgent",   cc: "Dept. Head" },
+  { id: "6", staffId: "EMP-06771", name: "Tom Kumar", department: "Cardiology", unit: "Surgery-Pre", dueDate: "Mar 04", daysOverdue: 14, tier: "Urgent",   cc: "Dept. Head" },
+  { id: "7", staffId: "HOS-0088", name: "Dr. James Smith", department: "Surgery", unit: "OR-3", dueDate: "Feb 28", daysOverdue: 18, tier: "Escalated",cc: "HR + Dept. Head + Admin" },
+  { id: "8", staffId: "HOS-3410", name: "Carlos Rivera", department: "Pediatrics", unit: "PICU", dueDate: "Feb 25", daysOverdue: 22, tier: "Escalated",cc: "HR + Dept. Head + Admin" },
 ];
 
 // ── Badge config ─────────────────────────────────────────────────────────────
@@ -86,22 +86,23 @@ export function EscalationMatrix() {
     setSelected((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const searchParams = useSearchParams();
-  const getFilterScore = () => {
-    let score = 0;
-    searchParams.forEach((val, key) => {
-       if (val && !val.startsWith("all-") && val !== "last-30") score += val.length;
-    });
-    return score;
-  };
-  const filterScore = getFilterScore();
+  const currentStaff = searchParams.get("staff") || "all-staff";
+  const currentDept = searchParams.get("dept") || "all-dept";
 
-  const rows = DATA.filter((_, i) => filterScore === 0 || (i % ((filterScore % 3) + 1) === 0)).filter(
-    (s) =>
-      FILTER[activeFilter]?.(s.daysOverdue) &&
-      (s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.department.toLowerCase().includes(search.toLowerCase()) ||
-        s.staffId.toLowerCase().includes(search.toLowerCase()))
-  );
+  const rows = DATA.filter((s) => {
+    // 1) Overdue Tier filter
+    const matchTier = FILTER[activeFilter]?.(s.daysOverdue);
+    // 2) Text search filter
+    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
+                        s.department.toLowerCase().includes(search.toLowerCase()) || 
+                        s.staffId.toLowerCase().includes(search.toLowerCase());
+    // 3) Global Staff filter
+    const matchStaff = currentStaff === "all-staff" || s.staffId === currentStaff;
+    // 4) Global Dept filter
+    const matchDept = currentDept === "all-dept" || s.department.toLowerCase() === currentDept.toLowerCase();
+
+    return matchTier && matchSearch && matchStaff && matchDept;
+  });
 
   const toggleAll = () => {
     const ids = rows.map((r) => r.id);

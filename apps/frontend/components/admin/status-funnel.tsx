@@ -11,6 +11,8 @@ import { useSearchParams } from "next/navigation";
 export function StatusFunnel() {
   const searchParams = useSearchParams();
   const currentBatch = searchParams.get("batch");
+  const currentStaff = searchParams.get("staff") || "all-staff";
+  const currentDept = searchParams.get("dept") || "all-dept";
 
   // Create a deterministic hash from the active parameters
   const getFilterScore = () => {
@@ -29,30 +31,31 @@ export function StatusFunnel() {
   const isBatchMode = !!currentBatch && currentBatch !== "all-batches";
 
   // Dynamic mock metrics mapping Cohort Batch logic & Multipliers
-  const metrics = isBatchMode ? (
-    currentBatch === "BATCH-2026-03-20" ? {
-      totalAssigned: 20,
-      completed: 12,
-      inProgress: 5,
-      overdue: 3,
-      reEvalQueue: 1,
-      upcomingToDo: 0,
+  let metrics = { totalAssigned: 0, completed: 0, inProgress: 0, overdue: 0, reEvalQueue: 0, upcomingToDo: 0 };
+  
+  if (currentStaff !== "all-staff") {
+    // Individual Staff View
+    metrics = { totalAssigned: 4, completed: 2, inProgress: 1, overdue: 1, reEvalQueue: 0, upcomingToDo: 1 };
+  } else if (currentDept !== "all-dept") {
+    // Isolated Department View
+    metrics = { totalAssigned: 120, completed: 95, inProgress: 15, overdue: 10, reEvalQueue: 2, upcomingToDo: 4 };
+  } else if (isBatchMode) {
+    metrics = currentBatch === "BATCH-2026-03-20" ? {
+      totalAssigned: 20, completed: 12, inProgress: 5, overdue: 3, reEvalQueue: 1, upcomingToDo: 0,
     } : {
-      totalAssigned: 15,
-      completed: 15,
-      inProgress: 0,
-      overdue: 0,
-      reEvalQueue: 0,
-      upcomingToDo: 0,
-    }
-  ) : {
-    totalAssigned: Math.max(1, Math.floor(500 * multiplier)),
-    completed: Math.floor(450 * multiplier),
-    inProgress: Math.floor(23 * multiplier),
-    overdue: Math.floor(27 * multiplier),
-    reEvalQueue: Math.floor(8 * multiplier),
-    upcomingToDo: Math.floor(12 * multiplier),
-  };
+      totalAssigned: 15, completed: 15, inProgress: 0, overdue: 0, reEvalQueue: 0, upcomingToDo: 0,
+    };
+  } else {
+    // Global View
+    metrics = {
+      totalAssigned: Math.max(1, Math.floor(500 * multiplier)),
+      completed: Math.floor(450 * multiplier),
+      inProgress: Math.floor(23 * multiplier),
+      overdue: Math.floor(27 * multiplier),
+      reEvalQueue: Math.floor(8 * multiplier),
+      upcomingToDo: Math.floor(12 * multiplier),
+    };
+  }
 
   const completedPct = Math.round((metrics.completed / metrics.totalAssigned) * 100) || 0;
   const inProgressPct = Math.round((metrics.inProgress / metrics.totalAssigned) * 100) || 0;
@@ -126,7 +129,7 @@ export function StatusFunnel() {
                 <h3 className="text-[14px] font-semibold text-slate-800 tracking-tight">Compliance Flow Pipeline</h3>
             </div>
             <span className="border border-slate-200 px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase text-slate-500 bg-white">
-              {currentBatch ? currentBatch : "Global Overview"}
+              {currentStaff !== "all-staff" ? `Staff: ${currentStaff}` : currentDept !== "all-dept" ? `Dept: ${currentDept}` : currentBatch ? currentBatch : "Global Overview"}
             </span>
         </div>
         

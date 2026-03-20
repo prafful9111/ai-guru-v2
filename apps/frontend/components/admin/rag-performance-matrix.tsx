@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import { 
   Table, 
@@ -15,27 +16,34 @@ import { Eye, ShieldAlert, Award, RotateCw, FileCheck, Search } from "lucide-rea
 import { ConversationDeepDiveSheet } from "./conversation-deep-dive-sheet";
 
 const MOCK_PERFORMANCE = [
-  { id: 1, name: "Dr. James Smith", department: "Surgery", scenario: "Code Blue", score: 98, status: "Green" },
-  { id: 2, name: "Sarah Jenkins", department: "ICU", scenario: "Code Blue", score: 92, status: "Green" },
-  { id: 3, name: "Michael Chen", department: "Emergency", scenario: "De-escalation", score: 72, status: "Amber" },
-  { id: 4, name: "Maria Lopez", department: "Emergency", scenario: "Routine Checkup", score: 68, status: "Amber" },
-  { id: 5, name: "Dr. Ahmed Khan", department: "Cardiology", scenario: "Angry Patient", score: 45, status: "Red" },
+  { id: 1, staffId: "EMP-09231", name: "Michael Chang", department: "Emergency", scenario: "De-escalation", score: 92, status: "Green" },
+  { id: 2, staffId: "EMP-04821", name: "Priya Sharma", department: "Cardiology", scenario: "Outside Food", score: 88, status: "Green" },
+  { id: 3, staffId: "EMP-05512", name: "Alisha Davis", department: "Emergency", scenario: "Cold Food", score: 72, status: "Amber" },
+  { id: 4, staffId: "EMP-01124", name: "Robert Jones", department: "ICU", scenario: "Visiting Hours", score: 68, status: "Amber" },
+  { id: 5, staffId: "EMP-03882", name: "Lisa Smith", department: "Cardiology", scenario: "Angry Patient", score: 45, status: "Red" },
 ];
 
 export function RagPerformanceMatrix() {
   const [selectedStaff, setSelectedStaff] = useState<any>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const currentStaff = searchParams.get("staff") || "all-staff";
+  const currentDept = searchParams.get("dept") || "all-dept";
 
   const totalGreen = MOCK_PERFORMANCE.filter(p => p.status === "Green").length;
   const totalAmber = MOCK_PERFORMANCE.filter(p => p.status === "Amber").length;
   const totalRed = MOCK_PERFORMANCE.filter(p => p.status === "Red").length;
 
-  const filteredStaff = MOCK_PERFORMANCE.filter(s => 
-    s.name.toLowerCase().includes(search.toLowerCase()) || 
-    s.department.toLowerCase().includes(search.toLowerCase()) ||
-    s.scenario.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredStaff = MOCK_PERFORMANCE.filter(s => {
+    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
+                        s.department.toLowerCase().includes(search.toLowerCase()) ||
+                        s.scenario.toLowerCase().includes(search.toLowerCase());
+    const matchStaff = currentStaff === "all-staff" || s.staffId === currentStaff;
+    const matchDept = currentDept === "all-dept" || s.department.toLowerCase() === currentDept.toLowerCase();
+
+    return matchSearch && matchStaff && matchDept;
+  });
 
   const handleOpenDeepDive = (staff: any) => {
     setSelectedStaff(staff);

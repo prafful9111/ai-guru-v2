@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, PanelLeftClose, PanelLeftOpen, Activity, Award, UserSquare2 } from "lucide-react";
+import { LayoutDashboard, Users, PanelLeftClose, PanelLeftOpen, Activity, Award, UserSquare2, Building2 } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 export const AdminSidebar = () => {
@@ -15,6 +15,11 @@ export const AdminSidebar = () => {
       label: "Assessment Status",
       href: "/admin/dashboard",
       icon: LayoutDashboard,
+    },
+    {
+      label: "Department Overview",
+      href: "/admin/department-overview",
+      icon: Building2,
     },
     {
       label: "User Management",
